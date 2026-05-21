@@ -321,9 +321,11 @@ def _mutate_bond_change(mol: Chem.Mol) -> Optional[Chem.Mol]:
     if not bonds:
         return None
     bond = random.choice(bonds)
-    orders = [Chem.BondType.SINGLE, Chem.BondType.DOUBLE, Chem.BondType.TRIPLE]
-    orders.remove(bond.GetBondType())
-    bond.SetBondType(random.choice(orders))
+    current = bond.GetBondType()
+    candidates = [Chem.BondType.SINGLE, Chem.BondType.DOUBLE, Chem.BondType.TRIPLE]
+    if current in candidates:
+        candidates.remove(current)
+    bond.SetBondType(random.choice(candidates))
     try:
         Chem.SanitizeMol(rw)
         return rw.GetMol()
@@ -597,35 +599,110 @@ def run_genetic_optimization(
 # 3. AutoDock Vina — Virtual Screening
 # ═══════════════════════════════════════════════════════════════
 
-def _convert_ligand_to_pdbqt(
-    ligand_smiles: str, output_path: str
-) -> Optional[str]:
-    """Convert a ligand SMILES to PDBQT format using meeko."""
-    try:
-        from meeko import MoleculePreparation, PDBQTWriterLegacy
+# Standard amino acids + common variants — used by the PDB cleaner
+_STANDARD_AA = {
+    "ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS",
+    "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL",
+    "HID", "HIE", "HIP", "HSD", "HSE", "HSP",      # histidine protonation states
+    "CYX", "CYM",                                      # cysteine variants
+    "ASH", "GLH", "LYN", "TYM",                      # ASP/GLU/LYS/TYR variants
+    "MSE",                                             # selenomethionine
+}
+_SMALL_MOLECULES = {"HOH", "WAT", "DOD", "H2O", "NA", "CL", "K", "MG", "CA", "ZN", "MN",
+                    "SO4", "PO4", "EDO", "GOL", "ACT", "BU1", "PEG", "MPD", "BME", "DTT",
+                    "ACY", "AZI", "BCT", "BMA", "CAC", "CIT", "DMS", "EOH", "FMT", "IOD",
+                    "MES", "NO3", "P6G", "PG4", "TAR", "TRS", "URE"}
 
-        mol = Chem.MolFromSmiles(ligand_smiles)
-        if mol is None:
-            return None
-        mol = Chem.AddHs(mol)
-        AllChem.EmbedMolecule(mol, randomSeed=42)
-        AllChem.MMFFOptimizeMolecule(mol)
 
-        preparator = MoleculePreparation()
-        mol_setups = preparator.prepare(mol)
-        if not mol_setups:
-            return None
+def _clean_pdb_for_docking(pdb_path: str, output_dir: str) -> tuple[str, dict]:
+    """Strip non-protein residues from a PDB file so meeko can process it.
 
-        pdbqt_string, _ = PDBQTWriterLegacy.write_string(mol_setups[0])
-        if pdbqt_string:
-            with open(output_path, "w") as f:
-                f.write(pdbqt_string)
-            return output_path
-        return None
-    except ImportError:
-        return None
-    except Exception:
-        return None
+    Removes:
+      - All HETATM records (ligands, cofactors, crystallisation agents, water)
+      - Water / buffer / ion residues from ATOM records
+    Keeps:
+      - Standard and modified amino-acid ATOM records
+
+    Returns:
+        (path to cleaned PDB, cleaning_info dict).
+    """
+    from collections import Counter
+
+    removed_residues: dict[str, list[dict]] = {}  # res_name → [{chain, res_num}]
+    cleaned_lines: list[str] = []
+
+    with open(pdb_path) as f:
+        for line in f:
+            if line.startswith("HETATM"):
+                res_name = line[17:20].strip()
+                chain = line[21:22].strip()
+                res_num = line[22:26].strip()
+                key = f"{res_name}:{chain}:{res_num}"
+                if res_name not in removed_residues:
+                    removed_residues[res_name] = []
+                # Deduplicate by (chain, res_num)
+                entry = {"chain": chain, "res_num": res_num}
+                if entry not in removed_residues[res_name]:
+                    removed_residues[res_name].append(entry)
+                continue  # skip HETATM
+
+            if line.startswith("ATOM"):
+                res_name = line[17:20].strip()
+                if res_name in _SMALL_MOLECULES:
+                    chain = line[21:22].strip()
+                    res_num = line[22:26].strip()
+                    if res_name not in removed_residues:
+                        removed_residues[res_name] = []
+                    entry = {"chain": chain, "res_num": res_num}
+                    if entry not in removed_residues[res_name]:
+                        removed_residues[res_name].append(entry)
+                    continue  # skip water / buffer ATOM records
+
+            cleaned_lines.append(line)
+
+    cleaned_path = os.path.join(output_dir, "receptor_cleaned.pdb")
+    with open(cleaned_path, "w") as f:
+        f.writelines(cleaned_lines)
+
+    info = {
+        "removed": removed_residues,
+        "total_removed_residues": sum(len(v) for v in removed_residues.values()),
+        "total_removed_types": len(removed_residues),
+    }
+    return cleaned_path, info
+
+def _convert_ligand_to_pdbqt(ligand_smiles: str, output_path: str) -> str:
+    """Convert a ligand SMILES to PDBQT format using meeko.
+
+    Returns the output path on success; raises RuntimeError on any failure
+    so the caller always knows whether preparation succeeded.
+    """
+    from meeko import MoleculePreparation, PDBQTWriterLegacy
+
+    mol = Chem.MolFromSmiles(ligand_smiles)
+    if mol is None:
+        raise RuntimeError(f"Invalid SMILES for ligand: {ligand_smiles}")
+
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol, randomSeed=42)
+    AllChem.MMFFOptimizeMolecule(mol)
+
+    preparator = MoleculePreparation()
+    mol_setups = preparator.prepare(mol)
+    if not mol_setups:
+        raise RuntimeError(
+            f"meeko MoleculePreparation returned empty setups for {ligand_smiles}"
+        )
+
+    pdbqt_string, is_ok, error_msg = PDBQTWriterLegacy.write_string(mol_setups[0])
+    if not is_ok:
+        raise RuntimeError(f"meeko PDBQT write failed: {error_msg}")
+    if not pdbqt_string:
+        raise RuntimeError("meeko returned empty PDBQT string")
+
+    with open(output_path, "w") as f:
+        f.write(pdbqt_string)
+    return output_path
 
 
 def _detect_binding_site(pdb_path: str) -> dict:
@@ -635,10 +712,11 @@ def _detect_binding_site(pdb_path: str) -> dict:
         for line in f:
             if line.startswith(("ATOM  ", "HETATM")):
                 try:
-                    x = float(line[30:38])
-                    y = float(line[38:46])
-                    z = float(line[46:54])
-                    coords.append((x, y, z))
+                    coords.append((
+                        float(line[30:38]),
+                        float(line[38:46]),
+                        float(line[46:54]),
+                    ))
                 except ValueError:
                     continue
 
@@ -647,7 +725,7 @@ def _detect_binding_site(pdb_path: str) -> dict:
 
     arr = np.array(coords)
     center = arr.mean(axis=0)
-    spread = arr.std(axis=0) * 2 + 8  # 8A padding
+    spread = arr.std(axis=0) * 2 + 8
 
     return {
         "center_x": round(float(center[0]), 3),
@@ -659,56 +737,60 @@ def _detect_binding_site(pdb_path: str) -> dict:
     }
 
 
-def _prepare_receptor_pdbqt(pdb_path: str, output_dir: str) -> Optional[str]:
-    """Prepare receptor PDBQT using meeko or a basic conversion."""
+def _prepare_receptor_pdbqt(pdb_path: str, output_dir: str) -> str:
+    """Prepare receptor PDBQT from a PDB file via meeko's CLI.
+
+    meeko 0.7.x does not expose a public Python API for writing receptor
+    PDBQT (Polymer has no write_pdbqt method).  The supported path is the
+    ``mk_prepare_receptor.py`` script that ships with meeko.
+    """
     out_path = os.path.join(output_dir, "receptor.pdbqt")
-    try:
-        from meeko import PDBQTMolecule
-
-        # meeko can read PDB directly for receptor preparation
-        with open(pdb_path) as f:
-            pdb_text = f.read()
-        pdbqt_mol = PDBQTMolecule(pdb_text, is_protein=True)
-        pdbqt_mol.write_pdbqt(out_path)
-        return out_path
-    except ImportError:
-        pass
-    except Exception:
-        pass
-
-    # Fallback: strip non-ATOM/HETATM and write as-is with PDBQT extension
-    try:
-        with open(pdb_path) as f_in, open(out_path, "w") as f_out:
-            for line in f_in:
-                if line.startswith(("ATOM", "HETATM", "TER", "END")):
-                    f_out.write(line)
-        return out_path
-    except Exception:
-        return None
+    # mk_prepare_receptor.py writes "receptor.pdbqt" in the output dir,
+    # appending suffixes itself — so we point it to output_dir directly.
+    proc = subprocess.run(
+        [
+            "mk_prepare_receptor.py",
+            "-i", pdb_path,
+            "-o", os.path.join(output_dir, "receptor"),
+            "-p",
+        ],
+        capture_output=True, text=True, timeout=120,
+    )
+    if proc.returncode != 0 or not os.path.exists(out_path):
+        raise RuntimeError(
+            f"meeko receptor preparation failed.\n"
+            f"stderr: {proc.stderr.strip()}\nstdout: {proc.stdout.strip()}"
+        )
+    return out_path
+    return out_path
 
 
 def run_vina_docking(
     receptor_pdb: str | bytes,
     ligand_smiles_list: list[str],
-    vina_executable: str = "vina",
     exhaustiveness: int = 8,
     num_modes: int = 5,
     progress_callback=None,
-) -> list[DockingResult]:
+) -> tuple[list[DockingResult], dict]:
     """Run AutoDock Vina docking for ligands against a receptor.
+
+    Non-standard residues (ligands, water, buffer, ions) are automatically
+    stripped from the receptor PDB before preparation.  Details of what was
+    removed are returned so the UI can display them.
 
     Args:
         receptor_pdb: Path to receptor PDB file, or bytes content.
         ligand_smiles_list: List of ligand SMILES to dock.
-        vina_executable: Path or name of the Vina binary.
         exhaustiveness: Vina exhaustiveness parameter (higher = more thorough).
         num_modes: Number of binding poses to output per ligand.
         progress_callback: Optional callable(step, total) for progress reporting.
 
     Returns:
-        List of DockingResult sorted by affinity (best first).
+        (docking_results sorted by affinity, pdb_cleaning_info dict).
     """
-    # --- handle receptor input ---
+    from vina import Vina
+
+    # --- handle receptor input (bytes → temp file) ---
     if isinstance(receptor_pdb, bytes):
         tmp = tempfile.NamedTemporaryFile(suffix=".pdb", delete=False)
         tmp.write(receptor_pdb)
@@ -720,152 +802,88 @@ def run_vina_docking(
         _cleanup_receptor = False
 
     results: list[DockingResult] = []
+    cleaning_info: dict = {}
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        # Prepare receptor
-        rec_pdbqt = _prepare_receptor_pdbqt(receptor_path, tmpdir)
-        if rec_pdbqt is None:
-            raise RuntimeError("Failed to prepare receptor PDBQT file.")
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # Step 1: clean PDB — strip non-protein residues
+            cleaned_path, cleaning_info = _clean_pdb_for_docking(
+                receptor_path, tmpdir
+            )
 
-        box = _detect_binding_site(receptor_path)
+            # Step 2: prepare receptor PDBQT from CLEANED PDB
+            rec_pdbqt = _prepare_receptor_pdbqt(cleaned_path, tmpdir)
 
-        total = len(ligand_smiles_list)
-        for i, smiles in enumerate(ligand_smiles_list):
-            if progress_callback:
-                progress_callback(i + 1, total)
+            # Step 3: detect binding site from CLEANED PDB (protein only)
+            box = _detect_binding_site(cleaned_path)
 
-            mol = Chem.MolFromSmiles(smiles)
-            if mol is None:
-                results.append(
-                    DockingResult(pose_id=-1, affinity=999.0, smiles=smiles)
-                )
-                continue
+            # Step 4: initialize Vina — compute grid maps once for all ligands
+            v = Vina(sf_name="vina", seed=0, verbosity=0)
+            v.set_receptor(rec_pdbqt)
+            v.compute_vina_maps(
+                center=[box["center_x"], box["center_y"], box["center_z"]],
+                box_size=[box["size_x"], box["size_y"], box["size_z"]],
+            )
 
-            smiles = Chem.MolToSmiles(mol, canonical=True)
-            lig_pdbqt = os.path.join(tmpdir, f"ligand_{i}.pdbqt")
-            out_pdbqt = os.path.join(tmpdir, f"out_{i}.pdbqt")
+            total = len(ligand_smiles_list)
+            for i, smiles in enumerate(ligand_smiles_list):
+                if progress_callback:
+                    progress_callback(i + 1, total)
 
-            prepared = _convert_ligand_to_pdbqt(smiles, lig_pdbqt)
+                mol = Chem.MolFromSmiles(smiles)
+                if mol is None:
+                    results.append(DockingResult(pose_id=-1, affinity=0.0, smiles=smiles))
+                    continue
 
-            if prepared is None:
-                # Fallback: use RDKit conformer as a rough pose
-                mol_3d = Chem.AddHs(mol)
-                AllChem.EmbedMolecule(mol_3d, randomSeed=i * 42)
-                AllChem.MMFFOptimizeMolecule(mol_3d)
-                pdb_block = Chem.MolToPDBBlock(mol_3d)
-                results.append(
-                    DockingResult(
-                        pose_id=0,
-                        affinity=-99.0,  # placeholder
-                        smiles=smiles,
-                        pdb_block=pdb_block,
-                    )
-                )
-                continue
+                smiles = Chem.MolToSmiles(mol, canonical=True)
+                lig_pdbqt = os.path.join(tmpdir, f"ligand_{i}.pdbqt")
+                _convert_ligand_to_pdbqt(smiles, lig_pdbqt)
 
-            # --- run Vina ---
+                v.set_ligand_from_file(lig_pdbqt)
+                v.dock(exhaustiveness=exhaustiveness, n_poses=num_modes)
+
+                poses_pdbqt = v.poses()
+                pose_blocks = poses_pdbqt.split("ENDMDL")
+                pose_count = 0
+                for block in pose_blocks:
+                    if "VINA RESULT" not in block:
+                        continue
+                    for line in block.splitlines():
+                        if "VINA RESULT" in line:
+                            parts = line.split()
+                            try:
+                                aff = float(parts[3])
+                            except (IndexError, ValueError):
+                                aff = 0.0
+                            results.append(DockingResult(
+                                pose_id=pose_count,
+                                affinity=aff,
+                                smiles=smiles,
+                                pdb_block=block.strip(),
+                            ))
+                            pose_count += 1
+
+    finally:
+        if _cleanup_receptor:
             try:
-                cmd = [
-                    vina_executable,
-                    "--receptor", rec_pdbqt,
-                    "--ligand", lig_pdbqt,
-                    "--out", out_pdbqt,
-                    "--center_x", str(box["center_x"]),
-                    "--center_y", str(box["center_y"]),
-                    "--center_z", str(box["center_z"]),
-                    "--size_x", str(box["size_x"]),
-                    "--size_y", str(box["size_y"]),
-                    "--size_z", str(box["size_z"]),
-                    "--exhaustiveness", str(exhaustiveness),
-                    "--num_modes", str(num_modes),
-                ]
-                proc = subprocess.run(
-                    cmd, capture_output=True, text=True, timeout=300
-                )
-
-                if proc.returncode == 0 and os.path.exists(out_pdbqt):
-                    # Parse Vina output PDBQT
-                    with open(out_pdbqt) as f:
-                        out_text = f.read()
-                    # Extract individual poses and their affinities
-                    poses = out_text.split("ENDMDL")
-                    pose_count = 0
-                    for pose_block in poses:
-                        if "VINA RESULT" not in pose_block:
-                            continue
-                        for line in pose_block.splitlines():
-                            if "VINA RESULT" in line:
-                                # Format: REMARK VINA RESULT:  -8.3  0.000  0.000
-                                parts = line.split()
-                                try:
-                                    aff = float(parts[3])
-                                except (IndexError, ValueError):
-                                    aff = 0.0
-                                results.append(
-                                    DockingResult(
-                                        pose_id=pose_count,
-                                        affinity=aff,
-                                        smiles=smiles,
-                                        pdb_block=pose_block.strip(),
-                                    )
-                                )
-                                pose_count += 1
-                else:
-                    # Vina failed — fallback to RDKit conformer
-                    mol_3d = Chem.AddHs(mol)
-                    AllChem.EmbedMolecule(mol_3d, randomSeed=i * 42)
-                    AllChem.MMFFOptimizeMolecule(mol_3d)
-                    pdb_block = Chem.MolToPDBBlock(mol_3d)
-                    results.append(
-                        DockingResult(
-                            pose_id=0,
-                            affinity=-999.0,
-                            smiles=smiles,
-                            pdb_block=pdb_block,
-                        )
-                    )
-
-            except FileNotFoundError:
-                # Vina not installed — use RDKit fallback
-                mol_3d = Chem.AddHs(mol)
-                AllChem.EmbedMolecule(mol_3d, randomSeed=i * 42)
-                AllChem.MMFFOptimizeMolecule(mol_3d)
-                pdb_block = Chem.MolToPDBBlock(mol_3d)
-                results.append(
-                    DockingResult(
-                        pose_id=0,
-                        affinity=-99.0,
-                        smiles=smiles,
-                        pdb_block=pdb_block,
-                    )
-                )
-            except subprocess.TimeoutExpired:
-                results.append(
-                    DockingResult(pose_id=-1, affinity=999.0, smiles=smiles)
-                )
-
-    if _cleanup_receptor:
-        try:
-            os.unlink(receptor_path)
-        except OSError:
-            pass
+                os.unlink(receptor_path)
+            except OSError:
+                pass
 
     results.sort(key=lambda r: r.affinity)
-    return results
+    return results, cleaning_info
 
 
 def run_vina_single(
     receptor_pdb: str | bytes,
     ligand_smiles: str,
-    vina_executable: str = "vina",
     exhaustiveness: int = 8,
     num_modes: int = 9,
-) -> list[DockingResult]:
+) -> tuple[list[DockingResult], dict]:
     """Convenience wrapper for docking a single ligand."""
     return run_vina_docking(
         receptor_pdb=receptor_pdb,
         ligand_smiles_list=[ligand_smiles],
-        vina_executable=vina_executable,
         exhaustiveness=exhaustiveness,
         num_modes=num_modes,
     )

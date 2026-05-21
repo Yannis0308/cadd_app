@@ -39,6 +39,7 @@ for key, default in [
     ("ga_seed_props", None),
     ("ga_best", None),
     ("docking_results", None),
+    ("cleaning_info", None),
     ("receptor_pdb", None),
     ("selected_ligand_idx", 0),
 ]:
@@ -392,6 +393,19 @@ else:
 
     st.divider()
 
+    # ── Dependency pre-check ──
+    dep_ok = True
+    try:
+        import meeko  # noqa: F401
+    except ImportError:
+        st.error("meeko is not installed. Run: `pip install meeko`")
+        dep_ok = False
+    try:
+        from vina import Vina  # noqa: F401
+    except ImportError:
+        st.error("vina is not installed. Run: `pip install vina`")
+        dep_ok = False
+
     # ── Run docking ──
     col_btn, col_params = st.columns([1, 3])
     with col_btn:
@@ -399,7 +413,7 @@ else:
             "⚡ Run Virtual Screening",
             type="primary",
             use_container_width=True,
-            disabled=(st.session_state.receptor_pdb is None or len(ligand_smiles) == 0),
+            disabled=(st.session_state.receptor_pdb is None or len(ligand_smiles) == 0 or not dep_ok),
         )
     with col_params:
         exhaus = st.selectbox("Exhaustiveness", [1, 4, 8, 16, 32], index=2)
@@ -414,7 +428,7 @@ else:
                 progress_bar.progress(step / total)
 
             try:
-                results = run_vina_docking(
+                results, cleaning_info = run_vina_docking(
                     receptor_pdb=st.session_state.receptor_pdb,
                     ligand_smiles_list=ligand_smiles,
                     exhaustiveness=exhaus,
@@ -422,11 +436,12 @@ else:
                     progress_callback=update_progress,
                 )
                 st.session_state.docking_results = results
+                st.session_state.cleaning_info = cleaning_info
                 st.session_state.selected_ligand_idx = 0
 
-                valid_poses = [r for r in results if r.pose_id >= 0]
+                n_ok = len([r for r in results if r.pose_id >= 0])
                 status.update(
-                    label=f"Docking complete — {len(valid_poses)} poses across {len(ligand_smiles)} ligands",
+                    label=f"Docking complete — {n_ok} poses across {len(ligand_smiles)} ligands",
                     state="complete",
                 )
             except Exception as e:
@@ -439,14 +454,36 @@ else:
         st.divider()
         st.subheader("Docking Results")
 
+        # ── PDB Cleaning Info ──
+        if st.session_state.get("cleaning_info"):
+            info = st.session_state.cleaning_info
+            removed = info.get("removed", {})
+            if removed:
+                with st.expander(
+                    f"🧹 PDB Cleaned — {info['total_removed_residues']} non-standard residues removed "
+                    f"({info['total_removed_types']} types)",
+                    expanded=False,
+                ):
+                    for res_name, entries in removed.items():
+                        locations = [f"{e['chain']}:{e['res_num']}" for e in entries]
+                        st.write(
+                            f"**{res_name}** × {len(entries)} "
+                            f"({', '.join(locations)})"
+                        )
+                    st.caption(
+                        "HETATM records (ligands, cofactors, buffer) and small-molecule ATOM "
+                        "records (water, ions) are removed so meeko can prepare the receptor. "
+                        "The original PDB file is not modified."
+                    )
+
         # Summary metrics
-        valid_affinities = [r.affinity for r in results if r.pose_id >= 0 and r.affinity < 900]
-        if valid_affinities:
+        valid_poses = [r for r in results if r.pose_id >= 0]
+        if valid_poses:
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Total Poses", len(results))
-            c2.metric("Best Affinity", f"{min(valid_affinities):.1f} kcal/mol")
-            c3.metric("Avg Affinity", f"{np.mean(valid_affinities):.1f} kcal/mol")
-            c4.metric("Ligands Docked", len(set(r.smiles for r in results if r.smiles)))
+            c1.metric("Total Poses", len(valid_poses))
+            c2.metric("Best Affinity", f"{min(r.affinity for r in valid_poses):.1f} kcal/mol")
+            c3.metric("Avg Affinity", f"{np.mean([r.affinity for r in valid_poses]):.1f} kcal/mol")
+            c4.metric("Ligands Docked", len(set(r.smiles for r in valid_poses if r.smiles)))
 
         # Results table
         df_results = pd.DataFrame(
@@ -455,7 +492,7 @@ else:
                     "#": i,
                     "SMILES": r.smiles,
                     "Pose": r.pose_id,
-                    "Affinity (kcal/mol)": f"{r.affinity:.1f}" if r.affinity < 900 else "N/A",
+                    "Affinity (kcal/mol)": f"{r.affinity:.1f}" if r.pose_id >= 0 else "Invalid SMILES",
                 }
                 for i, r in enumerate(results)
             ]
@@ -520,10 +557,14 @@ else:
 
             with col_info:
                 st.markdown("### Selected Pose")
-                st.metric(
-                    "Binding Affinity",
-                    f"{sel_result.affinity:.1f} kcal/mol" if sel_result.affinity < 900 else "N/A",
-                )
+                if sel_result.pose_id >= 0:
+                    st.metric(
+                        "Binding Affinity",
+                        f"{sel_result.affinity:.1f} kcal/mol",
+                        delta_color="inverse",
+                    )
+                else:
+                    st.warning("Invalid SMILES — could not be docked.")
                 st.markdown(f"**Pose ID:** {sel_result.pose_id}")
                 st.markdown(f"**Ligand:** `{sel_result.smiles}`")
 
