@@ -73,13 +73,13 @@ if mode == "🤖 AI Generation":
     with col_input:
         prompt = st.text_input(
             "Starting Fragment (SMILES or token)",
-            value="<bos>",
-            help="Use '<bos>' for unconditional generation, or a SMILES fragment like 'c1ccccc1' to seed the model.",
+            value="<s>",
+            help="Use '<s>' for unconditional generation, or '<s>C' to seed with a carbon atom.",
         )
     with col_params:
         n_seqs = st.slider("Number of sequences", 5, 50, 20, 5)
         temperature = st.slider("Temperature", 0.3, 1.5, 0.9, 0.1, help="Higher = more diverse output.")
-        max_len = st.slider("Max token length", 30, 200, 80, 10)
+        max_len = st.slider("Max new tokens", 20, 200, 80, 10, help="Maximum number of new tokens to generate beyond the prompt.")
 
     if st.button("🚀 Generate Molecules", type="primary", use_container_width=True):
         with st.status("Generating molecules with SMILESGPT...", expanded=True) as status:
@@ -88,7 +88,7 @@ if mode == "🤖 AI Generation":
                 results, raw_texts = run_smiles_gpt(
                     prompt=prompt,
                     num_sequences=n_seqs,
-                    max_length=max_len,
+                    max_new_tokens=max_len,
                     temperature=temperature,
                 )
                 st.session_state.gen_results = results

@@ -13,11 +13,13 @@ import random
 import subprocess
 import tempfile
 import time
+import logging
 import warnings
 from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
+import torch
 import pandas as pd
 from rdkit import Chem, RDLogger
 from rdkit.Chem import (
@@ -33,6 +35,7 @@ from rdkit.Chem import (
 
 RDLogger.DisableLog("rdApp.*")
 warnings.filterwarnings("ignore")
+logging.getLogger("torch").setLevel(logging.ERROR)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -100,32 +103,57 @@ def mol_to_image(smiles: str, size=(300, 200)) -> Optional[bytes]:
 # 1. SMILESGPT — AI-Driven Molecular Generation
 # ═══════════════════════════════════════════════════════════════
 
-_MODEL_NAME = "sanjaradylov/smiles-gpt"
+import os as _os
 
-_generator = None
+_CHECKPOINT_PATH = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+    "models", "smiles-gpt-master", "checkpoints", "benchmark-10m",
+)
+
+_model = None
+_tokenizer = None
 
 
-def _load_generator():
-    """Lazy-load the SMILESGPT pipeline. Cached across Streamlit reruns."""
-    global _generator
-    if _generator is not None:
-        return _generator
+def _load_model_and_tokenizer():
+    """Lazy-load SMILESGPT from local checkpoint. Cached across Streamlit reruns.
+
+    The model was trained with these special tokens:
+      <pad> (0)  <s> (1, BOS)  </s> (2, EOS)  <unk> (3)
+
+    We set these exact strings on the tokenizer so that HuggingFace APIs
+    recognise them.  No new tokens are added — only existing vocab entries
+    are wired up.  That avoids random embedding weights and keeps pad ≠ eos.
+    """
+    global _model, _tokenizer
+    if _model is not None:
+        return _model, _tokenizer
 
     try:
-        from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+        from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        tokenizer = AutoTokenizer.from_pretrained(_MODEL_NAME)
-        model = AutoModelForCausalLM.from_pretrained(_MODEL_NAME)
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-        _generator = pipeline(
-            "text-generation", model=model, tokenizer=tokenizer, device=-1
-        )
-        return _generator
+        _tokenizer = AutoTokenizer.from_pretrained(_CHECKPOINT_PATH)
+        _model = AutoModelForCausalLM.from_pretrained(_CHECKPOINT_PATH)
+        _model.eval()
+
+        max_valid_id = _model.config.vocab_size - 1  # 1071
+
+        # Wire up the *actual* special-token strings used during training
+        _tokenizer.pad_token = "<pad>"
+        _tokenizer.bos_token = "<s>"
+        _tokenizer.eos_token = "</s>"
+        _tokenizer.unk_token = "<unk>"
+
+        # Clamp any ID that might point outside the embedding table
+        for attr in ("pad_token_id", "eos_token_id", "bos_token_id", "unk_token_id"):
+            val = getattr(_tokenizer, attr, None)
+            if val is None or val > max_valid_id:
+                setattr(_tokenizer, attr, 0)
+
+        return _model, _tokenizer
     except Exception as e:
         raise RuntimeError(
-            f"Failed to load SMILESGPT model '{_MODEL_NAME}'. "
-            f"Ensure internet access and sufficient disk space. Details: {e}"
+            f"Failed to load SMILESGPT from '{_CHECKPOINT_PATH}'. "
+            f"Details: {e}"
         )
 
 
@@ -135,12 +163,11 @@ def _filter_valid_smiles(raw_strings: list[str]) -> list[str]:
     for text in raw_strings:
         for token in text.replace("\n", " ").split():
             token = token.strip().strip("'\"")
-            if not token or token in ("<bos>", "<eos>", "<pad>"):
+            if not token or token in ("<s>", "</s>", "<pad>", "<unk>"):
                 continue
             mol = Chem.MolFromSmiles(token)
             if mol is not None:
                 valid.append(Chem.MolToSmiles(mol, canonical=True))
-    # Deduplicate preserving order
     seen = set()
     unique = []
     for s in valid:
@@ -151,42 +178,57 @@ def _filter_valid_smiles(raw_strings: list[str]) -> list[str]:
 
 
 def run_smiles_gpt(
-    prompt: str = "<bos>",
+    prompt: str = "<s>",
     num_sequences: int = 10,
-    max_length: int = 80,
+    max_new_tokens: int = 80,
     temperature: float = 0.9,
     do_sample: bool = True,
     top_k: int = 50,
     top_p: float = 0.95,
 ) -> tuple[list[MoleculeResult], list[str]]:
-    """Generate SMILES using the SMILESGPT model.
+    """Generate SMILES using the SMILESGPT model (local checkpoint).
 
     Args:
-        prompt: Starting token(s), typically '<bos>' or '<bos>CCO'.
+        prompt: Starting token(s), typically '<s>' or '<s>C'.
+                Aliases '<bos>' and '<eos>' are translated automatically.
         num_sequences: How many sequences to generate.
-        max_length: Max generated token length.
+        max_new_tokens: Max number of *new* tokens to generate (beyond prompt).
         temperature: Sampling temperature (higher = more diverse).
         do_sample: If False, uses greedy decoding.
-        top_k: Top-K filtering.
-        top_p: Nucleus sampling threshold.
+        top_k: Top-K filtering (ignored when do_sample=False).
+        top_p: Nucleus sampling threshold (ignored when do_sample=False).
 
     Returns:
         (list of MoleculeResult, list of raw generated strings).
     """
-    gen = _load_generator()
-    raw = gen(
-        prompt,
-        max_length=max_length,
-        num_return_sequences=num_sequences,
-        do_sample=do_sample,
-        temperature=temperature,
-        top_k=top_k,
-        top_p=top_p,
-        pad_token_id=gen.tokenizer.pad_token_id
-        or gen.tokenizer.eos_token_id,
-        return_full_text=True,
-    )
-    raw_texts = [r["generated_text"] for r in raw]
+    # Translate user-friendly aliases to the model's actual special tokens
+    prompt = prompt.replace("<bos>", "<s>").replace("<eos>", "</s>")
+
+    model, tokenizer = _load_model_and_tokenizer()
+
+    inputs = tokenizer(prompt, return_tensors="pt")
+    input_ids = inputs["input_ids"]
+
+    # Build generation kwargs, only including sampling params when do_sample=True
+    gen_kwargs = {
+        "max_new_tokens": max_new_tokens,
+        "num_return_sequences": num_sequences,
+        "do_sample": do_sample,
+        "pad_token_id": tokenizer.pad_token_id,
+        "eos_token_id": tokenizer.eos_token_id,
+        "bos_token_id": tokenizer.bos_token_id,
+    }
+    if do_sample:
+        gen_kwargs.update({
+            "temperature": temperature,
+            "top_k": top_k,
+            "top_p": top_p,
+        })
+
+    with torch.no_grad():
+        outputs = model.generate(input_ids, **gen_kwargs)
+
+    raw_texts = [tokenizer.decode(seq, skip_special_tokens=True) for seq in outputs]
     valid_smiles = _filter_valid_smiles(raw_texts)
     results = [compute_properties(s) for s in valid_smiles]
     return results, raw_texts
