@@ -753,17 +753,6 @@ def _detect_binding_site(pdb_path: str) -> dict:
     }
 
 
-# Small molecules / solvent / ions that should NOT be treated as co-crystallized
-# ligands when detecting the binding site center.
-_SOLVENT_IONS = {
-    "HOH", "WAT", "DOD", "H2O",
-    "NA", "CL", "K", "MG", "CA", "ZN", "MN", "FE", "CU", "CO", "NI", "CD", "HG",
-    "SO4", "PO4", "NO3", "CIT", "ACT", "ACY", "AZI", "BCT", "BU1", "DMS", "DTT",
-    "EDO", "EOH", "FMT", "GOL", "IOD", "MES", "MPD", "P6G", "PEG", "PG4", "TAR",
-    "TRS", "URE", "BME", "CAC", "BMA",
-}
-
-
 def _detect_binding_site_from_ligand(pdb_path: str) -> dict | None:
     """Extract binding site center from co-crystallized HETATM ligands.
 
@@ -775,9 +764,6 @@ def _detect_binding_site_from_ligand(pdb_path: str) -> dict | None:
     with open(pdb_path) as f:
         for line in f:
             if line.startswith("HETATM"):
-                res_name = line[17:20].strip()
-                if res_name in _SOLVENT_IONS:
-                    continue
                 try:
                     coords.append((
                         float(line[30:38]),

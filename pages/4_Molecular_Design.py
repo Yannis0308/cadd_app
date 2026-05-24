@@ -458,21 +458,52 @@ else:
         if st.session_state.get("cleaning_info"):
             info = st.session_state.cleaning_info
             removed = info.get("removed", {})
-            if removed:
-                with st.expander(
-                    f"🧹 PDB Cleaned — {info['total_removed_residues']} non-standard residues removed "
-                    f"({info['total_removed_types']} types)",
-                    expanded=False,
-                ):
-                    for res_name, entries in removed.items():
-                        locations = [f"{e['chain']}:{e['res_num']}" for e in entries]
+            altloc = info.get("altloc_stripped", 0)
+            meeko_warn = info.get("meeko_warnings", [])
+            site_src = info.get("binding_site_source", "")
+            site_box = info.get("binding_box", {})
+            has_cleaning = bool(removed) or altloc > 0 or meeko_warn or bool(site_src)
+
+            if has_cleaning:
+                parts = []
+                if info.get("total_removed_residues", 0) > 0:
+                    parts.append(
+                        f"{info['total_removed_residues']} non-standard residues "
+                        f"({info['total_removed_types']} types)"
+                    )
+                if altloc > 0:
+                    parts.append(f"{altloc} alt-loc atoms stripped")
+                label = "PDB Prepared — " + ", ".join(parts)
+
+                with st.expander(label, expanded=False):
+                    if site_src and site_box:
+                        cx, cy, cz = site_box["center_x"], site_box["center_y"], site_box["center_z"]
+                        sx, sy, sz = site_box["size_x"], site_box["size_y"], site_box["size_z"]
                         st.write(
-                            f"**{res_name}** × {len(entries)} "
-                            f"({', '.join(locations)})"
+                            f"**Binding site**: {site_src}  \n"
+                            f"center = ({cx:.1f}, {cy:.1f}, {cz:.1f}),  "
+                            f"box = ({sx:.0f} × {sy:.0f} × {sz:.0f}) Å"
                         )
+                    if altloc > 0:
+                        st.write(
+                            f"**Alternate locations**: {altloc} atom records "
+                            f"with altLoc ≠ A removed (kept conformer A only)"
+                        )
+                    if removed:
+                        for res_name, entries in removed.items():
+                            locations = [f"{e['chain']}:{e['res_num']}" for e in entries]
+                            st.write(
+                                f"**{res_name}** × {len(entries)} "
+                                f"({', '.join(locations)})"
+                            )
+                    if meeko_warn:
+                        st.divider()
+                        st.caption("meeko warnings:")
+                        for w in meeko_warn[:10]:
+                            st.caption(f"• {w}")
                     st.caption(
-                        "HETATM records (ligands, cofactors, buffer) and small-molecule ATOM "
-                        "records (water, ions) are removed so meeko can prepare the receptor. "
+                        "HETATM, non-standard ATOM residues, and alternate-location "
+                        "atoms are removed so meeko can prepare the receptor. "
                         "The original PDB file is not modified."
                     )
 
