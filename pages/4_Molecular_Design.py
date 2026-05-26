@@ -119,7 +119,7 @@ if mode == "🤖 AI Generation":
             logps = [r.logp for r in valid]
             mws = [r.mol_weight for r in valid]
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Valid Molecules", f"{len(valid)}/{len(results)}")
+            c1.metric("Valid Molecules", f"{len(valid)}/{len(st.session_state.gen_raw)}")
             c2.metric("Avg QED", f"{np.mean(qeds):.3f}")
             c3.metric("Avg LogP", f"{np.mean(logps):.2f}")
             c4.metric("Avg MW", f"{np.mean(mws):.0f}")
