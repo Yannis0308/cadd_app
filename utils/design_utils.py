@@ -9,6 +9,7 @@ Provides three core engines:
 
 import io
 import os
+import pickle
 import random
 import subprocess
 import tempfile
@@ -16,10 +17,10 @@ import time
 import logging
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import torch
 import pandas as pd
 from rdkit import Chem, RDLogger
 from rdkit.Chem import (
@@ -35,7 +36,7 @@ from rdkit.Chem import (
 
 RDLogger.DisableLog("rdApp.*")
 warnings.filterwarnings("ignore")
-logging.getLogger("torch").setLevel(logging.ERROR)
+logging.getLogger("torch").setLevel(logging.ERROR)  # suppress noisy HF/torch logs
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -203,6 +204,8 @@ def run_smiles_gpt(
     """
     # Translate user-friendly aliases to the model's actual special tokens
     prompt = prompt.replace("<bos>", "<s>").replace("<eos>", "</s>")
+
+    import torch  # lazy import — avoids loading torch when only docking is needed
 
     model, tokenizer = _load_model_and_tokenizer()
 
@@ -890,108 +893,154 @@ def run_vina_docking(
     stripped from the receptor PDB before preparation.  Details of what was
     removed are returned so the UI can display them.
 
+    Docking runs in a *subprocess* to isolate meeko/vina native extensions
+    from torch (loaded by SMILESGPT).  This avoids segfaults caused by
+    conflicting C++ runtime libraries.
+
     Args:
         receptor_pdb: Path to receptor PDB file, or bytes content.
         ligand_smiles_list: List of ligand SMILES to dock.
         exhaustiveness: Vina exhaustiveness parameter (higher = more thorough).
         num_modes: Number of binding poses to output per ligand.
-        progress_callback: Optional callable(step, total) for progress reporting.
+        progress_callback: IGNORED in subprocess mode (no real-time updates).
 
     Returns:
         (docking_results sorted by affinity, pdb_cleaning_info dict).
     """
-    from vina import Vina
+    import sys
 
-    # --- handle receptor input (bytes → temp file) ---
+    worker = Path(__file__).resolve().parent / "docking_worker.py"
+
+    # --- prepare receptor for serialisation ---
+    receptor_for_worker: str
+    _cleanup: str | None = None
     if isinstance(receptor_pdb, bytes):
         tmp = tempfile.NamedTemporaryFile(suffix=".pdb", delete=False)
         tmp.write(receptor_pdb)
         tmp.close()
-        receptor_path = tmp.name
-        _cleanup_receptor = True
+        receptor_for_worker = tmp.name
+        _cleanup = tmp.name
     else:
-        receptor_path = receptor_pdb
-        _cleanup_receptor = False
+        receptor_for_worker = receptor_pdb
+
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".pickle", delete=False) as fin, \
+             tempfile.NamedTemporaryFile(suffix=".pickle", delete=False) as fout:
+            pickle.dump({
+                "receptor_pdb": receptor_for_worker,
+                "ligand_smiles_list": ligand_smiles_list,
+                "exhaustiveness": exhaustiveness,
+                "num_modes": num_modes,
+            }, fin)
+            fin.close()
+            fout.close()
+
+            env = os.environ.copy()
+            env.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+            env.setdefault("OMP_NUM_THREADS", "1")
+            env.setdefault("OPENBLAS_NUM_THREADS", "1")
+
+            proc = subprocess.run(
+                [sys.executable, "-u", str(worker), fin.name, fout.name],
+                capture_output=True, text=True, timeout=600,
+                env=env,
+            )
+            if proc.returncode != 0:
+                raise RuntimeError(
+                    f"Docking subprocess failed (exit {proc.returncode}).\n"
+                    f"stderr:\n{proc.stderr.strip() or '(empty)'}\n"
+                    f"stdout:\n{proc.stdout.strip() or '(empty)'}"
+                )
+
+            with open(fout.name, "rb") as f:
+                results, cleaning_info = pickle.load(f)
+
+            return results, cleaning_info
+    finally:
+        if _cleanup is not None:
+            try:
+                os.unlink(_cleanup)
+            except OSError:
+                pass
+
+
+def _run_vina_docking_impl(
+    receptor_pdb: str,  # always a file path when called from worker
+    ligand_smiles_list: list[str],
+    exhaustiveness: int = 8,
+    num_modes: int = 5,
+) -> tuple[list[DockingResult], dict]:
+    """Internal: actual docking implementation (runs in subprocess)."""
+    from vina import Vina
 
     results: list[DockingResult] = []
     cleaning_info: dict = {}
 
-    try:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # Step 0: detect binding site from co-crystallized ligand BEFORE cleaning
-            box = _detect_binding_site_from_ligand(receptor_path)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Step 0: detect binding site from co-crystallized ligand BEFORE cleaning
+        box = _detect_binding_site_from_ligand(receptor_pdb)
 
-            # Step 1: clean PDB — strip non-protein residues
-            cleaned_path, cleaning_info = _clean_pdb_for_docking(
-                receptor_path, tmpdir
-            )
+        # Step 1: clean PDB — strip non-protein residues
+        cleaned_path, cleaning_info = _clean_pdb_for_docking(
+            receptor_pdb, tmpdir
+        )
 
-            # Step 2: prepare receptor PDBQT from CLEANED PDB
-            rec_pdbqt, meeko_info = _prepare_receptor_pdbqt(cleaned_path, tmpdir)
-            cleaning_info["meeko_skipped"] = meeko_info["meeko_skipped"]
-            cleaning_info["meeko_warnings"] = meeko_info["meeko_warnings"]
+        # Step 2: prepare receptor PDBQT from CLEANED PDB
+        rec_pdbqt, meeko_info = _prepare_receptor_pdbqt(cleaned_path, tmpdir)
+        cleaning_info["meeko_skipped"] = meeko_info["meeko_skipped"]
+        cleaning_info["meeko_warnings"] = meeko_info["meeko_warnings"]
 
-            # Step 3: fall back to whole-protein COM if no co-crystallized ligand
-            if box is None:
-                box = _detect_binding_site(cleaned_path)
-                cleaning_info["binding_site_source"] = "protein center-of-mass"
-            else:
-                cleaning_info["binding_site_source"] = "co-crystallized ligand"
+        # Step 3: fall back to whole-protein COM if no co-crystallized ligand
+        if box is None:
+            box = _detect_binding_site(cleaned_path)
+            cleaning_info["binding_site_source"] = "protein center-of-mass"
+        else:
+            cleaning_info["binding_site_source"] = "co-crystallized ligand"
 
-            cleaning_info["binding_box"] = box
+        cleaning_info["binding_box"] = box
 
-            # Step 4: initialize Vina — compute grid maps once for all ligands
-            v = Vina(sf_name="vina", seed=0, verbosity=0)
-            v.set_receptor(rec_pdbqt)
-            v.compute_vina_maps(
-                center=[box["center_x"], box["center_y"], box["center_z"]],
-                box_size=[box["size_x"], box["size_y"], box["size_z"]],
-            )
+        # Step 4: initialize Vina — compute grid maps once for all ligands
+        v = Vina(sf_name="vina", seed=0, verbosity=0)
+        v.set_receptor(rec_pdbqt)
+        v.compute_vina_maps(
+            center=[box["center_x"], box["center_y"], box["center_z"]],
+            box_size=[box["size_x"], box["size_y"], box["size_z"]],
+        )
 
-            total = len(ligand_smiles_list)
-            for i, smiles in enumerate(ligand_smiles_list):
-                if progress_callback:
-                    progress_callback(i + 1, total)
+        total = len(ligand_smiles_list)
+        for i, smiles in enumerate(ligand_smiles_list):
+            mol = Chem.MolFromSmiles(smiles)
+            if mol is None:
+                results.append(DockingResult(pose_id=-1, affinity=0.0, smiles=smiles))
+                continue
 
-                mol = Chem.MolFromSmiles(smiles)
-                if mol is None:
-                    results.append(DockingResult(pose_id=-1, affinity=0.0, smiles=smiles))
+            smiles = Chem.MolToSmiles(mol, canonical=True)
+            lig_pdbqt = os.path.join(tmpdir, f"ligand_{i}.pdbqt")
+            _convert_ligand_to_pdbqt(smiles, lig_pdbqt)
+
+            v.set_ligand_from_file(lig_pdbqt)
+            v.dock(exhaustiveness=exhaustiveness, n_poses=num_modes)
+
+            poses_pdbqt = v.poses()
+            pose_blocks = poses_pdbqt.split("ENDMDL")
+            pose_count = 0
+            for block in pose_blocks:
+                if "VINA RESULT" not in block:
                     continue
-
-                smiles = Chem.MolToSmiles(mol, canonical=True)
-                lig_pdbqt = os.path.join(tmpdir, f"ligand_{i}.pdbqt")
-                _convert_ligand_to_pdbqt(smiles, lig_pdbqt)
-
-                v.set_ligand_from_file(lig_pdbqt)
-                v.dock(exhaustiveness=exhaustiveness, n_poses=num_modes)
-
-                poses_pdbqt = v.poses()
-                pose_blocks = poses_pdbqt.split("ENDMDL")
-                pose_count = 0
-                for block in pose_blocks:
-                    if "VINA RESULT" not in block:
-                        continue
-                    for line in block.splitlines():
-                        if "VINA RESULT" in line:
-                            parts = line.split()
-                            try:
-                                aff = float(parts[3])
-                            except (IndexError, ValueError):
-                                aff = 0.0
-                            results.append(DockingResult(
-                                pose_id=pose_count,
-                                affinity=aff,
-                                smiles=smiles,
-                                pdb_block=_pdbqt_block_to_pdb(block),
-                            ))
-                            pose_count += 1
-
-    finally:
-        if _cleanup_receptor:
-            try:
-                os.unlink(receptor_path)
-            except OSError:
-                pass
+                for line in block.splitlines():
+                    if "VINA RESULT" in line:
+                        parts = line.split()
+                        try:
+                            aff = float(parts[3])
+                        except (IndexError, ValueError):
+                            aff = 0.0
+                        results.append(DockingResult(
+                            pose_id=pose_count,
+                            affinity=aff,
+                            smiles=smiles,
+                            pdb_block=_pdbqt_block_to_pdb(block),
+                        ))
+                        pose_count += 1
 
     results.sort(key=lambda r: r.affinity)
     return results, cleaning_info

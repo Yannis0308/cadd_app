@@ -1,5 +1,6 @@
 """Molecular Design — AI generation, GA optimization, virtual screening & 3D."""
 
+import importlib
 import io
 import time
 from pathlib import Path
@@ -29,6 +30,10 @@ st.set_page_config(
     page_icon="🎨",
     layout="wide",
 )
+
+from utils.style_loader import load_css
+
+load_css()
 
 # ── Session State Init ─────────────────────────────────────────
 for key, default in [
@@ -69,7 +74,7 @@ if mode == "🤖 AI Generation":
     st.title("🤖 AI-Driven Molecular Generation")
     st.markdown("Generate novel drug-like molecules using **SMILESGPT**, a GPT-2 model fine-tuned on chemical space.")
 
-    col_input, col_params = st.columns([2, 1])
+    col_input, col_params = st.columns([1, 1])
 
     with col_input:
         prompt = st.text_input(
@@ -181,7 +186,7 @@ elif mode == "🧬 Lead Optimization":
     st.markdown("Evolve a lead molecule using **RDKit-based genetic operators** — mutation, crossover, and multi-objective scoring.")
 
     # ── Input section ──
-    col_left, col_right = st.columns([1, 2])
+    col_left, col_right = st.columns([1, 1.5])
 
     with col_left:
         st.markdown("### Input Molecule")
@@ -393,31 +398,28 @@ else:
 
     st.divider()
 
-    # ── Dependency pre-check ──
+    # ── Dependency pre-check (uses find_spec to avoid segfault from native extensions) ──
     dep_ok = True
-    try:
-        import meeko  # noqa: F401
-    except ImportError:
+    if importlib.util.find_spec("meeko") is None:
         st.error("meeko is not installed. Run: `pip install meeko`")
         dep_ok = False
-    try:
-        from vina import Vina  # noqa: F401
-    except ImportError:
+    if importlib.util.find_spec("vina") is None:
         st.error("vina is not installed. Run: `pip install vina`")
         dep_ok = False
 
     # ── Run docking ──
-    col_btn, col_params = st.columns([1, 3])
+    col_btn, col_params = st.columns([1, 1])
     with col_btn:
+        exhaus = st.selectbox("Exhaustiveness", [1, 4, 8, 16, 32], index=2)
+        n_modes = st.selectbox("Poses per ligand", [1, 3, 5, 9], index=2)
+    with col_params:
+        st.markdown("<div style='height: 65px;'></div>", unsafe_allow_html=True)
         run_docking = st.button(
             "⚡ Run Virtual Screening",
             type="primary",
             use_container_width=True,
             disabled=(st.session_state.receptor_pdb is None or len(ligand_smiles) == 0 or not dep_ok),
         )
-    with col_params:
-        exhaus = st.selectbox("Exhaustiveness", [1, 4, 8, 16, 32], index=2)
-        n_modes = st.selectbox("Poses per ligand", [1, 3, 5, 9], index=2)
 
     if run_docking:
         with st.status("Running docking calculations...", expanded=True) as status:

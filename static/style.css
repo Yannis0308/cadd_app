@@ -1,0 +1,198 @@
+/* ===== TYPOGRAPHY ===== */
+
+.main-title {
+    text-align: center;
+    color: #1E3A8A;
+    font-size: 3.0rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+
+.sub-title {
+    text-align: center;
+    color: #4B5563;
+    font-size: 1.2rem;
+    margin-bottom: 3rem;
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+/* ===== FEATURE CARDS ===== */
+
+.feature-card {
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 1rem 0;
+    border: none;
+    background: white;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f0f4ff, #e6e6ff);
+}
+
+.feature-title {
+    color: #1F2937;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+
+.feature-desc {
+    color: #6B7280;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ===== BUTTONS ===== */
+
+.start-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.8rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: auto;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+.start-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+/* ===== DIVIDER ===== */
+
+.divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #E5E7EB, transparent);
+    margin: 3rem 0;
+}
+
+/* ===== STEP CARDS ===== */
+
+.step-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    height: 100%;
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+/* ===== STATS CARDS ===== */
+
+.stats-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.stats-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1E3A8A;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    color: #6B7280;
+    font-size: 0.9rem;
+}
+
+/* ===== STREAMLIT NATIVE COMPONENT OVERRIDES ===== */
+
+/* Primary buttons use the gradient theme */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.stButton > button[kind="primary"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Metric value color */
+[data-testid="stMetricValue"] {
+    color: #1E3A8A;
+    font-weight: 700;
+}
+
+/* DataFrame header */
+[data-testid="stDataFrame"] thead th {
+    background: linear-gradient(135deg, #f0f4ff, #e6e6ff);
+    color: #1E3A8A;
+    font-weight: 600;
+}
+
+/* Sidebar background */
+[data-testid="stSidebar"] {
+    background-color: #F8FAFC;
+}
+
+/* Expander accent */
+[data-testid="stExpander"] details summary {
+    color: #1E3A8A;
+}
+
+/* Status widget accent */
+[data-testid="stStatusWidget"] {
+    border-left: 3px solid #667eea;
+}
