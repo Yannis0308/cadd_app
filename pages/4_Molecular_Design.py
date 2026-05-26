@@ -480,22 +480,23 @@ else:
                         cx, cy, cz = site_box["center_x"], site_box["center_y"], site_box["center_z"]
                         sx, sy, sz = site_box["size_x"], site_box["size_y"], site_box["size_z"]
                         st.write(
-                            f"**Binding site**: {site_src}  \n"
+                            f"📍**Binding site**: {site_src}  \n"
                             f"center = ({cx:.1f}, {cy:.1f}, {cz:.1f}),  "
                             f"box = ({sx:.0f} × {sy:.0f} × {sz:.0f}) Å"
                         )
-                    if altloc > 0:
-                        st.write(
-                            f"**Alternate locations**: {altloc} atom records "
-                            f"with altLoc ≠ A removed (kept conformer A only)"
-                        )
                     if removed:
+                        st.markdown("🚫**Removed Components**:")
                         for res_name, entries in removed.items():
                             locations = [f"{e['chain']}:{e['res_num']}" for e in entries]
                             st.write(
                                 f"**{res_name}** × {len(entries)} "
                                 f"({', '.join(locations)})"
                             )
+                    if altloc > 0:
+                        st.write(
+                            f"🧹**Alternate locations**: {altloc} atom records "
+                            f"with altLoc ≠ A removed (kept conformer A only)"
+                        )
                     if meeko_warn:
                         st.divider()
                         st.caption("meeko warnings:")
