@@ -9,6 +9,7 @@ st.set_page_config(
 )
 
 from utils.style_loader import load_css
+from utils.ui import caption, description, divider, page_title, section_header, sidebar_title
 
 load_css()
 
@@ -23,15 +24,15 @@ st.markdown("""
 # 顶部区域
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    st.markdown('<div class="main-title">🧬 CADD智能药物设计平台</div>', unsafe_allow_html=True)
-    st.markdown('<div class="sub-title">一站式计算机辅助药物设计解决方案 | 加速从靶点到候选药物的发现</div>', unsafe_allow_html=True)
+    page_title("🧬 CADD智能药物设计平台")
+    description("一站式计算机辅助药物设计解决方案 | 加速从靶点到候选药物的发现")
 
 
 # 分割线
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+divider()
 
 # 功能介绍
-st.markdown("### 🎯 平台核心功能")
+section_header("🎯 平台核心功能")
 
 # 创建四列布局
 col1, col2, col3, col4 = st.columns(4)
@@ -97,10 +98,10 @@ with col4:
     """, unsafe_allow_html=True)
 
 # 分割线
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+divider()
 
 # 快速开始指南
-st.markdown("### 🚀 快速开始指南")
+section_header("🚀 快速开始指南")
 
 # 创建步骤说明
 steps_col1, steps_col2, steps_col3 = st.columns(3)
@@ -133,7 +134,7 @@ with steps_col3:
     """, unsafe_allow_html=True)
 
 # 分割线
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+divider()
 
 # # 特色功能展示
 # st.markdown("### ✨ 特色功能")
@@ -207,7 +208,7 @@ st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
 
 # 侧边栏
 with st.sidebar:
-    st.markdown("## 🔧 平台设置")
+    sidebar_title("🔧 平台设置")
     
     # 主题选择
     theme = st.selectbox(
@@ -226,7 +227,7 @@ with st.sidebar:
     
     st.divider()
     
-    st.markdown("## 📖 功能导航")
+    sidebar_title("📖 功能导航")
     
     # 页面链接
     st.page_link("Homepage.py", label=" 主页", icon="🏠")
@@ -237,21 +238,20 @@ with st.sidebar:
     
     st.divider()
     
-    st.markdown("**© 2026 CADD智能药物设计平台**")
+    caption("© 2026 CADD智能药物设计平台")
 
-# 页脚
-st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+
 
 footer_col1, footer_col2, footer_col3 = st.columns(3)
 with footer_col1:
-    st.markdown("**© 2026 CADD智能药物设计平台**")
-    st.markdown("All rights reserved")
+    caption("© 2026 CADD智能药物设计平台")
+    caption("All rights reserved")
 with footer_col2:
-    st.markdown("**仅供学术研究使用**")
-    st.markdown("非商业用途")
+    caption("仅供学术研究使用")
+    caption("非商业用途")
 with footer_col3:
-    st.markdown("[用户协议] | [隐私政策] | [使用条款]")
-    st.markdown("[GitHub] | [文档] | [论坛]")
+    caption("[用户协议] | [隐私政策] | [使用条款]")
+    caption("[GitHub] | [文档] | [论坛]")
 
 # 底部装饰
 st.markdown("""

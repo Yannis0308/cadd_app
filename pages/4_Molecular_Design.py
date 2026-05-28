@@ -24,6 +24,16 @@ from utils.design_utils import (
     run_vina_docking,
     run_vina_single,
 )
+from utils.ui import (
+    caption,
+    description,
+    divider,
+    label,
+    page_title,
+    section_header,
+    sidebar_text,
+    sidebar_title,
+)
 
 st.set_page_config(
     page_title="Molecular Design — CADD",
@@ -52,41 +62,45 @@ for key, default in [
         st.session_state[key] = default
 
 # ── Sidebar ────────────────────────────────────────────────────
-st.sidebar.title("🎨 Molecular Design")
-st.sidebar.markdown("AI-driven molecular generation, optimization, and virtual screening.")
+sidebar_title("🎨 Molecular Design")
+sidebar_text("AI-driven molecular generation, optimization, and virtual screening.")
 
 mode = st.sidebar.radio(
     "Select Workflow",
     ["🤖 AI Generation", "🧬 Lead Optimization", "🔬 Virtual Screening & 3D"],
     label_visibility="collapsed",
 )
-
 st.sidebar.divider()
-st.sidebar.caption(
+sidebar_text(
     "Models and algorithms run locally. "
     "First-time SMILESGPT download requires ~500 MB and internet access."
 )
+
+
 
 # ═══════════════════════════════════════════════════════════════
 # TAB 1 — AI Molecular Generation
 # ═══════════════════════════════════════════════════════════════
 if mode == "🤖 AI Generation":
-    st.title("🤖 AI-Driven Molecular Generation")
-    st.markdown("Generate novel drug-like molecules using **SMILESGPT**, a GPT-2 model fine-tuned on chemical space.")
+    page_title("🤖 AI-Driven Molecular Generation")
+    description("Generate novel drug-like molecules using **SMILESGPT**, a GPT-2 model fine-tuned on chemical space.")
 
-    col_input, col_params = st.columns([1, 1])
+    col_input, _, col_params = st.columns([0.8, 0.1, 1])
 
     with col_input:
+        section_header("Input Sequence")
         prompt = st.text_input(
             "Starting Fragment (SMILES or token)",
             value="<s>",
             help="Use '<s>' for unconditional generation, or '<s>C' to seed with a carbon atom.",
         )
     with col_params:
+        section_header("Generation Parameters")
         n_seqs = st.slider("Number of sequences", 5, 50, 20, 5)
         temperature = st.slider("Temperature", 0.3, 1.5, 0.9, 0.1, help="Higher = more diverse output.")
         max_len = st.slider("Max new tokens", 20, 200, 80, 10, help="Maximum number of new tokens to generate beyond the prompt.")
 
+    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
     if st.button("🚀 Generate Molecules", type="primary", use_container_width=True):
         with st.status("Generating molecules with SMILESGPT...", expanded=True) as status:
             st.write("Loading model (cached after first load)...")
@@ -115,8 +129,8 @@ if mode == "🤖 AI Generation":
         valid = [r for r in results if r.valid]
         invalid = [r for r in results if not r.valid]
 
-        st.divider()
-        st.subheader(f"Results — {len(valid)} Valid Molecules")
+        divider()
+        section_header(f"Results — {len(valid)} Valid Molecules")
 
         # Metrics row
         if valid:
@@ -131,7 +145,7 @@ if mode == "🤖 AI Generation":
 
         # Molecule grid
         if valid:
-            st.markdown("### Generated Molecules")
+            section_header("Generated Molecules")
             cols_per_row = 4
             for row_start in range(0, len(valid), cols_per_row):
                 cols = st.columns(cols_per_row)
@@ -152,7 +166,7 @@ if mode == "🤖 AI Generation":
 
         # Property table
         if valid:
-            st.markdown("### Property Table")
+            section_header("Property Table")
             df = pd.DataFrame(
                 [
                     {
@@ -182,14 +196,14 @@ if mode == "🤖 AI Generation":
 # TAB 2 — Lead Optimization (Genetic Algorithm)
 # ═══════════════════════════════════════════════════════════════
 elif mode == "🧬 Lead Optimization":
-    st.title("🧬 Genetic Algorithm Lead Optimization")
-    st.markdown("Evolve a lead molecule using **RDKit-based genetic operators** — mutation, crossover, and multi-objective scoring.")
+    page_title("🧬 Genetic Algorithm Lead Optimization")
+    description("Evolve a lead molecule using **RDKit-based genetic operators** — mutation, crossover, and multi-objective scoring.")
 
     # ── Input section ──
-    col_left, col_right = st.columns([1, 1.5])
+    col_left, _, col_right = st.columns([1, 0.2, 2])
 
     with col_left:
-        st.markdown("### Input Molecule")
+        section_header("Input Molecule")
         seed_smiles = st.text_input(
             "Seed SMILES",
             value="c1ccccc1C(=O)O",
@@ -201,7 +215,7 @@ elif mode == "🧬 Lead Optimization":
             if img:
                 st.image(img)
             seed_props = compute_properties(seed_smiles)
-            st.caption(
+            caption(
                 f"QED: {seed_props.qed:.3f} | LogP: {seed_props.logp:.2f} | MW: {seed_props.mol_weight:.1f}"
             )
         else:
@@ -209,7 +223,7 @@ elif mode == "🧬 Lead Optimization":
             seed_smiles = "c1ccccc1C(=O)O"
 
     with col_right:
-        st.markdown("### GA Parameters")
+        section_header("GA Parameters")
         c1, c2 = st.columns(2)
         with c1:
             n_gen = st.slider("Generations", 3, 20, 8)
@@ -239,6 +253,7 @@ elif mode == "🧬 Lead Optimization":
             target_mw = st.number_input("Target MW", 100.0, 800.0, 350.0, 10.0)
         else:
             target_mw = 350.0
+    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
 
     if st.button("🧬 Run Genetic Optimization", type="primary", use_container_width=True):
         st.session_state.ga_seed_props = compute_properties(seed_smiles)
@@ -272,17 +287,17 @@ elif mode == "🧬 Lead Optimization":
 
     # ── Display GA results ──
     if st.session_state.ga_log is not None and st.session_state.ga_seed_props is not None:
-        st.divider()
+        divider()
         evo_log = st.session_state.ga_log
         best = evo_log[-1]
         seed_props = st.session_state.ga_seed_props
 
         # Before / After comparison
-        st.subheader("Before → After Comparison")
-        c_before, c_arrow, c_after = st.columns([1, 0.2, 1])
+        section_header("Before → After Comparison")
+        c_before, c_arrow, c_after = st.columns([0.5, 0.2, 0.5])
 
         with c_before:
-            st.markdown("**Seed Molecule**")
+            label("Seed Molecule")
             img = mol_to_image(seed_smiles, size=(300, 200))
             if img:
                 st.image(img)
@@ -291,10 +306,10 @@ elif mode == "🧬 Lead Optimization":
             st.metric("MW", f"{seed_props.mol_weight:.1f}")
 
         with c_arrow:
-            st.markdown("<h1 style='text-align:center;line-height:300px'>→</h1>", unsafe_allow_html=True)
+            st.markdown("<h1 style='text-align:center;line-height:300px'>➜  </h1>", unsafe_allow_html=True)
 
         with c_after:
-            st.markdown("**Optimized Molecule**")
+            label("Optimized Molecule")
             best_smi = best["best_smiles"]
             img = mol_to_image(best_smi, size=(300, 200))
             if img:
@@ -303,10 +318,14 @@ elif mode == "🧬 Lead Optimization":
             st.metric("LogP", f"{best['logp']:.2f}", delta=f"{best['logp'] - seed_props.logp:.2f}")
             st.metric("MW", f"{best['mol_weight']:.1f}", delta=f"{best['mol_weight'] - seed_props.mol_weight:.1f}")
 
-        st.markdown(f"**Optimized SMILES:** `{best_smi}`")
+        st.markdown(
+            f'<p style="font-size:1.0rem;font-weight:500">'
+            f"<strong>Optimized SMILES:</strong> <code>{best_smi}</code></p>",
+            unsafe_allow_html=True,
+        )
 
         # Evolution curve
-        st.subheader("Evolution Curve")
+        section_header("Evolution Curve")
         fig = go.Figure()
 
         gens = [e["generation"] for e in evo_log]
@@ -340,7 +359,7 @@ elif mode == "🧬 Lead Optimization":
         st.plotly_chart(fig, use_container_width=True)
 
         # History table
-        st.subheader("Generation History")
+        section_header("Generation History")
         st.dataframe(
             st.session_state.ga_history,
             use_container_width=True,
@@ -351,14 +370,15 @@ elif mode == "🧬 Lead Optimization":
 # TAB 3 — Virtual Screening & 3D
 # ═══════════════════════════════════════════════════════════════
 else:
-    st.title("🔬 Virtual Screening & 3D Visualization")
-    st.markdown("Upload a protein structure and ligand library, run docking, and visually inspect binding poses in **3D**.")
+    page_title("🔬 Virtual Screening & 3D Visualization")
+    description("Upload a protein structure and ligand library, run docking, and visually inspect binding poses in **3D**.")
 
     # ── File Upload ──
-    col_up1, col_up2 = st.columns(2)
+    col_up1, _, col_up2 = st.columns([2, 0.2, 2])
 
     with col_up1:
-        st.markdown("### 📥 Protein (Receptor)")
+        section_header("📥 Protein (Receptor)")
+        st.markdown("<div style='height: 5px;'></div>", unsafe_allow_html=True)
         pdb_file = st.file_uploader(
             "Upload receptor PDB file",
             type=["pdb", "pdbqt"],
@@ -369,7 +389,7 @@ else:
             st.success(f"Loaded: {pdb_file.name} ({len(st.session_state.receptor_pdb):,} bytes)")
 
     with col_up2:
-        st.markdown("### 📥 Ligand Library")
+        section_header("📥 Ligand Library")
         lig_input_mode = st.radio("Input method", ["SMILES list", "Upload SDF"], horizontal=True, label_visibility="collapsed")
 
         if lig_input_mode == "SMILES list":
@@ -394,7 +414,7 @@ else:
                 except Exception as e:
                     st.error(f"Failed to parse SDF: {e}")
 
-        st.caption(f"**{len(ligand_smiles)}** ligand(s) ready")
+        caption(f"**{len(ligand_smiles)}** ligand(s) ready")
 
     st.divider()
 
@@ -408,10 +428,11 @@ else:
         dep_ok = False
 
     # ── Run docking ──
-    col_btn, col_params = st.columns([1, 1])
+    col_btn, _ ,col_params = st.columns([2, 0.2, 2])
     with col_btn:
         exhaus = st.selectbox("Exhaustiveness", [1, 4, 8, 16, 32], index=2)
         n_modes = st.selectbox("Poses per ligand", [1, 3, 5, 9], index=2)
+
     with col_params:
         st.markdown("<div style='height: 65px;'></div>", unsafe_allow_html=True)
         run_docking = st.button(
@@ -420,14 +441,10 @@ else:
             use_container_width=True,
             disabled=(st.session_state.receptor_pdb is None or len(ligand_smiles) == 0 or not dep_ok),
         )
-
+        
     if run_docking:
         with st.status("Running docking calculations...", expanded=True) as status:
             st.write("Preparing receptor and ligands for docking...")
-            progress_bar = st.progress(0)
-
-            def update_progress(step, total):
-                progress_bar.progress(step / total)
 
             try:
                 results, cleaning_info = run_vina_docking(
@@ -435,7 +452,6 @@ else:
                     ligand_smiles_list=ligand_smiles,
                     exhaustiveness=exhaus,
                     num_modes=n_modes,
-                    progress_callback=update_progress,
                 )
                 st.session_state.docking_results = results
                 st.session_state.cleaning_info = cleaning_info
@@ -453,8 +469,8 @@ else:
     # ── Display docking results ──
     if st.session_state.docking_results is not None:
         results = st.session_state.docking_results
-        st.divider()
-        st.subheader("Docking Results")
+        divider()
+        section_header("Docking Results")
 
         # ── PDB Cleaning Info ──
         if st.session_state.get("cleaning_info"):
@@ -475,9 +491,9 @@ else:
                     )
                 if altloc > 0:
                     parts.append(f"{altloc} alt-loc atoms stripped")
-                label = "PDB Prepared — " + ", ".join(parts)
+                expander_label = "PDB Prepared — " + ", ".join(parts)
 
-                with st.expander(label, expanded=False):
+                with st.expander(expander_label, expanded=False):
                     if site_src and site_box:
                         cx, cy, cz = site_box["center_x"], site_box["center_y"], site_box["center_z"]
                         sx, sy, sz = site_box["size_x"], site_box["size_y"], site_box["size_z"]
@@ -487,7 +503,7 @@ else:
                             f"box = ({sx:.0f} × {sy:.0f} × {sz:.0f}) Å"
                         )
                     if removed:
-                        st.markdown("🚫**Removed Components**:")
+                        label("🚫 Removed Components:")
                         for res_name, entries in removed.items():
                             locations = [f"{e['chain']}:{e['res_num']}" for e in entries]
                             st.write(
@@ -500,11 +516,11 @@ else:
                             f"with altLoc ≠ A removed (kept conformer A only)"
                         )
                     if meeko_warn:
-                        st.divider()
-                        st.caption("meeko warnings:")
+                        divider()
+                        caption("meeko warnings:")
                         for w in meeko_warn[:10]:
-                            st.caption(f"• {w}")
-                    st.caption(
+                            caption(f"• {w}")
+                    caption(
                         "HETATM, non-standard ATOM residues, and alternate-location "
                         "atoms are removed so meeko can prepare the receptor. "
                         "The original PDB file is not modified."
@@ -523,7 +539,7 @@ else:
         df_results = pd.DataFrame(
             [
                 {
-                    "#": i,
+                    "ID": i+1,
                     "SMILES": r.smiles,
                     "Pose": r.pose_id,
                     "Affinity (kcal/mol)": f"{r.affinity:.1f}" if r.pose_id >= 0 else "Invalid SMILES",
@@ -531,7 +547,7 @@ else:
                 for i, r in enumerate(results)
             ]
         )
-        st.markdown("Click a row in the table to view its 3D pose below:")
+        description("Click a row in the table to view its 3D pose below:")
 
         selected_rows = st.dataframe(
             df_results,
@@ -547,19 +563,19 @@ else:
             st.session_state.selected_ligand_idx = selected_rows.selection.rows[0]
 
         # ── 3D Viewer ──
-        st.divider()
-        st.subheader("🔮 3D Binding Pose Viewer")
+        divider()
+        section_header("🔮 3D Binding Pose Viewer")
 
         sel_idx = st.session_state.selected_ligand_idx
         if sel_idx < len(results):
             sel_result = results[sel_idx]
-            col_3d, col_info = st.columns([3, 1])
+            col_3d, col_info = st.columns([2, 1])
 
             with col_3d:
                 try:
                     import py3Dmol
 
-                    view = py3Dmol.view(width=750, height=500)
+                    view = py3Dmol.view(width=750, height=750)
 
                     # Add receptor
                     if st.session_state.receptor_pdb:
@@ -582,7 +598,7 @@ else:
                     view.zoomTo()
                     view.render()
 
-                    st.components.v1.html(view._make_html(), height=520, scrolling=False)
+                    st.components.v1.html(view._make_html(), height=700, scrolling=False)
 
                 except ImportError:
                     st.warning("py3Dmol is not installed. Install with: `pip install py3Dmol`")
@@ -590,7 +606,7 @@ else:
                     st.error(f"3D rendering error: {e}")
 
             with col_info:
-                st.markdown("### Selected Pose")
+                section_header("Selected Pose")
                 if sel_result.pose_id >= 0:
                     st.metric(
                         "Binding Affinity",
@@ -599,13 +615,13 @@ else:
                     )
                 else:
                     st.warning("Invalid SMILES — could not be docked.")
-                st.markdown(f"**Pose ID:** {sel_result.pose_id}")
+                label(f"Pose ID: {sel_result.pose_id}")
                 st.markdown(f"**Ligand:** `{sel_result.smiles}`")
 
                 mol = Chem.MolFromSmiles(sel_result.smiles)
                 if mol is not None:
                     props = compute_properties(sel_result.smiles)
-                    st.markdown("**Ligand Properties:**")
+                    label("Ligand Properties:")
                     st.write(f"- QED: {props.qed:.3f}")
                     st.write(f"- LogP: {props.logp:.2f}")
                     st.write(f"- MW: {props.mol_weight:.1f}")
@@ -617,8 +633,8 @@ else:
                     st.image(img)
 
                 # Navigation
-                st.divider()
-                st.caption("Navigate poses:")
+                divider()
+                caption("Navigate poses:")
                 cn1, cn2, cn3 = st.columns([1, 2, 1])
                 if cn1.button("◀ Prev", disabled=(sel_idx == 0)):
                     st.session_state.selected_ligand_idx = max(0, sel_idx - 1)

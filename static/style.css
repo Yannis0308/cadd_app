@@ -76,7 +76,9 @@
 
 /* ===== BUTTONS ===== */
 
-.start-button {
+a.start-button,
+a.start-button:link,
+a.start-button:visited {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -93,7 +95,8 @@
     width: 100%;
 }
 
-.start-button:hover {
+a.start-button:hover,
+a.start-button:active {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
     color: white;
@@ -187,6 +190,32 @@
     background-color: #F8FAFC;
 }
 
+/* ── Sidebar radio (workflow selector) ── */
+[data-testid="stSidebar"] [data-testid="stRadio"] label {
+    display: flex;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    margin-bottom: 0.25rem;
+    border-radius: 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #374151;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+    background: #eef0ff;
+    color: #1E3A8A;
+}
+
+[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: linear-gradient(135deg, #667eea15, #764ba215);
+    color: #1E3A8A;
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 #667eea;
+}
+
 /* Expander accent */
 [data-testid="stExpander"] details summary {
     color: #1E3A8A;
@@ -195,4 +224,96 @@
 /* Status widget accent */
 [data-testid="stStatusWidget"] {
     border-left: 3px solid #667eea;
+}
+
+/* ===== CUSTOM PROPERTIES ===== */
+
+:root {
+    --font-size-h1: 3.0rem;
+    --font-size-h3: 1.4rem;
+    --font-size-body: 1.1rem;
+    --font-size-caption: 0.9rem;
+    --font-size-label: 1.0rem;
+    --color-body: #374151;
+    --color-caption: #6B7280;
+    --line-height-body: 1.6;
+}
+
+/* ===== UI COMPONENT CLASSES ===== */
+
+.ui-page-title {
+    font-size: var(--font-size-h1);
+    font-weight: 700;
+    color: #1E3A8A;
+    margin-bottom: 0.8rem;
+}
+
+.ui-section-header {
+    font-size: var(--font-size-h3);
+    font-weight: 900;
+    color: #4e4d93;
+    margin-top: 1.0rem;
+    margin-bottom: 0.6rem;
+}
+
+.ui-section-header::before {
+    content: "▸";
+    color: #667eea;
+    margin-right: 0.4rem;
+    font-weight: 700;
+}
+
+.ui-description {
+    font-size: var(--font-size-body);
+    color: var(--color-body);
+    line-height: var(--line-height-body);
+    margin-bottom: 1.0rem;
+}
+
+.ui-label {
+    font-size: var(--font-size-label);
+    font-weight: 600;
+    color: #1F2937;
+}
+
+.ui-caption {
+    font-size: var(--font-size-caption);
+    color: var(--color-caption);
+    line-height: 1.5;
+}
+
+.ui-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #E5E7EB, transparent);
+    border: none;
+    margin: 2rem 0;
+}
+
+.ui-sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 2000;
+    color: #1E3A8A;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.5px;
+}
+
+.ui-sidebar-text {
+    font-size: 0.90rem;
+    color: #555a81;
+    line-height: 1.7;
+    margin-bottom: 0.8rem;
+}
+
+.ui-card {
+    border-radius: 12px;
+    padding: 1.5rem;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+}
+
+.ui-card-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
 }
