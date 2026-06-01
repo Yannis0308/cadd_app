@@ -2,7 +2,7 @@ import streamlit as st
 
 # 页面配置
 st.set_page_config(
-    page_title="CADD智能药物设计平台",
+    page_title="CADD一站式研发平台",
     page_icon="🧬",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -24,7 +24,7 @@ st.markdown("""
 # 顶部区域
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    page_title("🧬 CADD智能药物设计平台")
+    page_title("🧬 CADD一站式研发平台")
     description("一站式计算机辅助药物设计解决方案 | 加速从靶点到候选药物的发现")
 
 
@@ -43,10 +43,10 @@ with col1:
         <div class="feature-icon">🧪</div>
         <div class="feature-title">分子分析</div>
         <div class="feature-desc">
-            • 分子性质预测与评估<br>
-            • 相似性搜索与比对<br>
-            • 可合成性快速评估<br>
-            • 2D/3D结构可视化
+            • 理化性质与类药性评估<br>
+            • PubChem 相似性检索<br>
+            • SA Score 可合成性评估<br>
+            • 2D / 3D 结构可视化
         </div>
         <a href="/Molecular_Analysis" target="_self" class="start-button">开始使用</a>
     </div>
@@ -58,10 +58,10 @@ with col2:
         <div class="feature-icon">🤖</div>
         <div class="feature-title">模型训练</div>
         <div class="feature-desc">
-            • 数据预处理与特征工程<br>
-            • 机器学习模型训练<br>
-            • 模型可解释性分析<br>
-            • 新分子预测与评估
+            • 数据导入与智能清洗<br>
+            • 特征工程与分布分析<br>
+            • RF / XGBoost / SVM 多模型<br>
+            • 新分子预测与结果导出
         </div>
         <a href="/Model_Training" target="_self" class="start-button">开始使用</a>
     </div>
@@ -73,10 +73,11 @@ with col3:
         <div class="feature-icon">🔍</div>
         <div class="feature-title">知识发现</div>
         <div class="feature-desc">
-            • 疾病-靶点关系查询<br>
-            • 文献智能挖掘与摘要<br>
-            • 药物靶点网络分析<br>
-            • 临床试验信息整合
+            • 疾病 - 靶点双向检索<br>
+            • 靶点 - 药物关联挖掘<br>
+            • PDB 3D 结构在线渲染<br>
+            • PubMed 文献时空挖掘<br>
+            • GLM-4 AI 科研助手
         </div>
         <a href="/Knowledge_Discovery" target="_self" class="start-button">开始使用</a>
     </div>
@@ -88,10 +89,10 @@ with col4:
         <div class="feature-icon">🧬</div>
         <div class="feature-title">分子设计</div>
         <div class="feature-desc">
-            • AI驱动的分子生成<br>
-            • 分子性质优化<br>
-            • 虚拟筛选与对接<br>
-            • 逆合成路线规划
+            • SMILESGPT AI 分子生成<br>
+            • 遗传算法先导化合物优化<br>
+            • AutoDock Vina 虚拟筛选<br>
+            • 3D 结合构象查看
         </div>
         <a href="/Molecular_Design" target="_self" class="start-button">开始使用</a>
     </div>
@@ -103,7 +104,6 @@ divider()
 # 快速开始指南
 section_header("🚀 快速开始指南")
 
-# 创建步骤说明
 steps_col1, steps_col2, steps_col3 = st.columns(3)
 
 with steps_col1:
@@ -111,7 +111,7 @@ with steps_col1:
     <div class="step-card">
         <div class="step-number">1</div>
         <h3>准备数据</h3>
-        <p>准备SMILES格式的分子数据、收集活性/性质数据、整理靶点信息</p>
+        <p>准备 SMILES 格式的分子数据，收集活性/性质标注，整理靶点或疾病关键词</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -120,7 +120,7 @@ with steps_col2:
     <div class="step-card">
         <div class="step-number">2</div>
         <h3>选择模块</h3>
-        <p>根据研究需求选择功能模块、按照指引上传数据、配置分析参数</p>
+        <p>按需求进入对应功能模块：分子分析 / 模型训练 / 知识发现 / 分子设计</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -129,7 +129,7 @@ with steps_col3:
     <div class="step-card">
         <div class="step-number">3</div>
         <h3>获取结果</h3>
-        <p>查看分析结果与可视化、下载结果文件、进行下一步设计决策</p>
+        <p>查看交互式图表与 3D 结构，导出 CSV / Excel 结果，驱动下一步决策</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -208,50 +208,30 @@ divider()
 
 # 侧边栏
 with st.sidebar:
-    sidebar_title("🔧 平台设置")
-    
-    # 主题选择
-    theme = st.selectbox(
-        "选择主题",
-        ["浅色模式", "深色模式", "自动适应"],
-        index=2
-    )
-    
-    # 语言选择
-    language = st.selectbox(
-        "选择语言",
-        ["简体中文", "English"],
-        index=0
-    )
-    
-    
-    st.divider()
-    
     sidebar_title("📖 功能导航")
-    
-    # 页面链接
+
     st.page_link("Homepage.py", label=" 主页", icon="🏠")
     st.page_link("pages/1_Molecular_Analysis.py", label=" 分子分析", icon="🧪")
     st.page_link("pages/2_Model_Training.py", label=" 模型训练", icon="🤖")
     st.page_link("pages/3_Knowledge_Discovery.py", label=" 知识发现", icon="🔍")
     st.page_link("pages/4_Molecular_Design.py", label=" 分子设计", icon="🧬")
-    
+
     st.divider()
-    
-    caption("© 2026 CADD智能药物设计平台")
 
+    caption("© 2026 CADD一站式研发平台")
 
+# 页脚
+divider()
 
 footer_col1, footer_col2, footer_col3 = st.columns(3)
 with footer_col1:
-    caption("© 2026 CADD智能药物设计平台")
+    caption("© 2026 CADD一站式研发平台")
     caption("All rights reserved")
 with footer_col2:
     caption("仅供学术研究使用")
     caption("非商业用途")
 with footer_col3:
-    caption("[用户协议] | [隐私政策] | [使用条款]")
-    caption("[GitHub] | [文档] | [论坛]")
+    st.markdown("[GitHub](https://github.com/Yannis0308/cadd_app.git)")
 
 # 底部装饰
 st.markdown("""

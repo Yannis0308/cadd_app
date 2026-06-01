@@ -23,7 +23,7 @@ from utils.model_utils import get_available_models, train_model, evaluate_classi
 # 页面配置
 # ═══════════════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="模型训练 - CADD平台",
+    page_title="模型训练 - CADD一站式研发平台",
     page_icon="🧠",
     layout="wide",
 )
