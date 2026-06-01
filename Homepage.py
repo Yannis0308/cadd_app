@@ -74,9 +74,8 @@ with col3:
         <div class="feature-title">知识发现</div>
         <div class="feature-desc">
             • 疾病 - 靶点双向检索<br>
-            • 靶点 - 药物关联挖掘<br>
             • PDB 3D 结构在线渲染<br>
-            • PubMed 文献时空挖掘<br>
+            • PubMed 文献挖掘<br>
             • GLM-4 AI 科研助手
         </div>
         <a href="/Knowledge_Discovery" target="_self" class="start-button">开始使用</a>
