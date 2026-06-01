@@ -563,7 +563,7 @@ else:
 
         # ── 3D 查看器 ──
         divider()
-        section_header("🔮 3D 结合构象查看器")
+        section_header("🔮 3D 结合构象查看")
 
         sel_idx = st.session_state.selected_ligand_idx
         if sel_idx < len(results):
@@ -635,11 +635,11 @@ else:
                 divider()
                 caption("浏览构象:")
                 cn1, cn2, cn3 = st.columns([1, 2, 1])
-                if cn1.button("◀ 上一个", disabled=(sel_idx == 0)):
+                if cn1.button("◀ Prev", disabled=(sel_idx == 0)):
                     st.session_state.selected_ligand_idx = max(0, sel_idx - 1)
                     st.rerun()
                 cn2.write(f"**{sel_idx + 1}** / {len(results)}")
-                if cn3.button("下一个 ▶", disabled=(sel_idx >= len(results) - 1)):
+                if cn3.button("Next ▶", disabled=(sel_idx >= len(results) - 1)):
                     st.session_state.selected_ligand_idx = min(len(results) - 1, sel_idx + 1)
                     st.rerun()
 
