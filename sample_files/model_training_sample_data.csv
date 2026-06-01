@@ -1,0 +1,179 @@
+SMILES,Drug_Name,Activity_Binary,IC50_uM,LogP,Molecular_Weight,HBA,HBD,Source
+CC(=O)NC1=CC=C(C=C1)O,Paracetamol,1,0.52,1.35,151.2,2,2,Drug-like
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C,Theophylline,1,1.02,-1.03,194.2,6,0,Drug-like
+c1ccc2c(c1)cccn2,Quinoline,0,399.2,2.23,129.2,1,0,Drug-like
+CC(C)(C)NCC(O)COc1ccccc1,Atenolol,1,1.22,1.81,223.3,3,2,Drug-like
+CCO,Ethanol,0,173.76,-0.0,46.1,1,1,Drug-like
+CC(=O)NC1=CC=C(C=C1)O,Paracetamol,1,0.54,1.35,151.2,2,2,Drug-like
+CC1=CC=CC=C1,Toluene,0,341.62,2.0,92.1,0,0,Drug-like
+CC1=CC=CC=C1C,Compound_15,1,172.23,2.3,106.2,0,0,Random
+c1ccncc1,Pyridine,0,85.91,1.08,79.1,1,0,Drug-like
+c1ccc2c(c1)cccn2,Quinoline,0,153.07,2.23,129.2,1,0,Drug-like
+C1=CC=C2C(=C1)C(=O)NC2=O,Phenytoin,1,0.85,0.57,147.1,2,1,Drug-like
+CC(C)C[C@@H](C(=O)NCC(=O)O)NC(=O)C(C(C)C)N,Dipeptide,1,0.39,-0.3,287.4,4,4,Drug-like
+COc1cc2c(cc1OC)C(=O)C3=C(C2=O)C(=O)C4=C(C3=O)C(OC)=C(OC)C=C4OC,Doxorubicin,1,0.31,1.08,438.4,9,0,Drug-like
+CC1=CC=CC=C1,Toluene,0,471.49,2.0,92.1,0,0,Drug-like
+CC(=O)NC1=CC=C(C=C1)O,Paracetamol,1,0.57,1.35,151.2,2,2,Drug-like
+C1=CC=CC2=CC=CC=C12,Naphthalene,0,95.45,2.84,128.2,0,0,Drug-like
+C1=CC=CC2=CC=CC=C12,Naphthalene,0,336.06,2.84,128.2,0,0,Drug-like
+CCCCCCCCCCCCCCCC,Hexadecane,0,315.17,6.49,226.4,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Ibuprofen,1,0.84,3.07,206.3,1,1,Drug-like
+C1=CC=CC2=CC=CC=C12,Naphthalene,0,214.17,2.84,128.2,0,0,Drug-like
+CC(=O)NC1=CC=C(C=C1)O,Paracetamol,1,0.55,1.35,151.2,2,2,Drug-like
+CCO,Ethanol,0,61.25,-0.0,46.1,1,1,Drug-like
+CC(C)(C)C1=CC=C(C=C1)C(=O)O,Fenbufen,1,0.76,2.68,178.2,1,1,Drug-like
+C1=CC=CC=C1C=O,Compound_10,1,9.9,1.5,106.1,1,0,Random
+COC(=O)C=C,Compound_12,1,84.72,0.35,86.1,2,0,Random
+C=CC=C,Compound_5,1,49.7,1.36,54.1,0,0,Random
+CC1=CC=CC=C1,Toluene,0,170.14,2.0,92.1,0,0,Drug-like
+CCO,Ethanol,0,337.74,-0.0,46.1,1,1,Drug-like
+CCCCCCCCCC,Decane,0,201.47,4.15,142.3,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Naproxen,1,1.53,3.07,206.3,1,1,Drug-like
+CC(C)NCC(O)COc1ccccc1,Propranolol,1,1.46,1.42,209.3,3,2,Drug-like
+CC(=O)Oc1ccccc1,Phenyl acetate,0,358.08,1.61,136.1,2,0,Drug-like
+CC1=C(C=CC=C1)C(=O)O,o-Toluic acid,1,4.44,1.69,136.1,1,1,Drug-like
+CC(C)(C)NCC(O)COc1ccccc1,Atenolol,1,1.54,1.81,223.3,3,2,Drug-like
+CN1C=NC2=C1C(=O)NC(=O)N2C,Caffeine,1,1.23,-1.04,180.2,5,1,Drug-like
+COc1cc2c(cc1OC)C(=O)C3=C(C2=O)C(=O)C4=C(C3=O)C(OC)=C(OC)C=C4OC,Doxorubicin,1,0.3,1.08,438.4,9,0,Drug-like
+CCCC[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)NC(=O)[C@@H](CC(C)C)N,Tripeptide,1,0.57,1.65,357.5,4,4,Drug-like
+CC(C)CC1=CC=C(C=C1)C(=O)O,Ibuprofen acid,1,3.19,2.58,178.2,1,1,Drug-like
+CCOC(C)=O,Ethyl acetate,0,487.9,0.57,88.1,2,0,Drug-like
+CCCC[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)NC(=O)[C@@H](CC(C)C)N,Tripeptide,1,0.63,1.65,357.5,4,4,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)OCC,Ibuprofen ester,1,0.61,3.55,234.3,2,0,Drug-like
+c1ccncc1,Pyridine,0,180.22,1.08,79.1,1,0,Drug-like
+C1CCCCC1,Cyclohexane,0,412.62,2.34,84.2,0,0,Drug-like
+CCO,Ethanol,0,150.44,-0.0,46.1,1,1,Drug-like
+c1ccc2c(c1)cccn2,Quinoline,0,191.95,2.23,129.2,1,0,Drug-like
+CC(=O)Oc1ccccc1C(=O)O,Aspirin,1,0.53,1.31,180.2,3,1,Drug-like
+CC(C)(C)C,Neopentane,0,298.42,2.05,72.2,0,0,Drug-like
+C1COCCO1,Dioxane,0,378.11,0.03,88.1,2,0,Drug-like
+CC(C)C[C@@H](C(=O)NCC(=O)O)NC(=O)C(C(C)C)N,Dipeptide,1,0.37,-0.3,287.4,4,4,Drug-like
+CC1=CC=C(C=C1)C(=O)O,Tolmetin,1,0.87,1.69,136.2,1,1,Drug-like
+c1ccccc1,Benzene,0,277.41,1.69,78.1,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Naproxen,1,1.28,3.07,206.3,1,1,Drug-like
+CC(C)NCC(O)COc1ccccc1,Propranolol,1,1.33,1.42,209.3,3,2,Drug-like
+CC(C)C[C@@H](C(=O)NCC(=O)O)NC(=O)C(C(C)C)N,Dipeptide,1,0.38,-0.3,287.4,4,4,Drug-like
+CC(C)CC1=CC=C(C=C1)C(=O)O,Ibuprofen acid,1,3.7,2.58,178.2,1,1,Drug-like
+CC(C)(C)C,Neopentane,0,309.81,2.05,72.2,0,0,Drug-like
+c1ccccc1,Benzene,0,139.48,1.69,78.1,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)OCC,Ibuprofen ester,1,0.71,3.55,234.3,2,0,Drug-like
+CCCCCCCCCC,Decane,0,431.37,4.15,142.3,0,0,Drug-like
+C1=CC=C2C(=C1)C(=O)NC2=O,Phenytoin,1,0.91,0.57,147.1,2,1,Drug-like
+CC1=C(C=CC=C1)C(=O)O,o-Toluic acid,1,4.14,1.69,136.1,1,1,Drug-like
+CCOC(C)=O,Ethyl acetate,0,291.3,0.57,88.1,2,0,Drug-like
+CCO,Ethanol,0,381.41,-0.0,46.1,1,1,Drug-like
+CC(C)(C)O,Compound_8,1,44.25,0.78,74.1,1,1,Random
+CN1C=NC2=C1C(=O)NC(=O)N2C,Caffeine,1,1.14,-1.04,180.2,5,1,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Ibuprofen,1,0.93,3.07,206.3,1,1,Drug-like
+CC(C)NCC(O)COc1ccccc1,Propranolol,1,1.56,1.42,209.3,3,2,Drug-like
+c1ccc2c(c1)cccn2,Quinoline,0,170.48,2.23,129.2,1,0,Drug-like
+CC(=O)Oc1ccccc1C(=O)O,Aspirin,1,0.49,1.31,180.2,3,1,Drug-like
+CC(C)(C)NCC(O)COc1ccccc1,Atenolol,1,1.3,1.81,223.3,3,2,Drug-like
+CCOC(C)=O,Ethyl acetate,0,413.21,0.57,88.1,2,0,Drug-like
+CC(=O)CC(=O)C,Compound_11,1,125.68,0.55,100.1,2,0,Random
+c1ccccc1,Benzene,0,148.39,1.69,78.1,0,0,Drug-like
+CN1C=NC2=C1C(=O)NC(=O)N2C,Caffeine,1,1.14,-1.04,180.2,5,1,Drug-like
+CC1=C(C=CC=C1)C(=O)O,o-Toluic acid,1,3.98,1.69,136.1,1,1,Drug-like
+C1COCCO1,Dioxane,0,123.53,0.03,88.1,2,0,Drug-like
+CC(=O)Oc1ccccc1C(=O)O,Aspirin,1,0.52,1.31,180.2,3,1,Drug-like
+c1ccc2c(c1)cccn2,Quinoline,0,64.45,2.23,129.2,1,0,Drug-like
+CC(=O)Oc1ccccc1,Phenyl acetate,0,338.0,1.61,136.1,2,0,Drug-like
+CC(C)(C)C1=CC=C(C=C1)C(=O)O,Fenbufen,1,0.87,2.68,178.2,1,1,Drug-like
+COc1cc2c(cc1OC)C(=O)C3=C(C2=O)C(=O)C4=C(C3=O)C(OC)=C(OC)C=C4OC,Doxorubicin,1,0.26,1.08,438.4,9,0,Drug-like
+CCOC(C)=O,Ethyl acetate,0,378.38,0.57,88.1,2,0,Drug-like
+CC(C)NCC(O)COc1ccccc1,Propranolol,1,1.41,1.42,209.3,3,2,Drug-like
+COc1cc2c(cc1OC)C(=O)C3=C(C2=O)C(=O)C4=C(C3=O)C(OC)=C(OC)C=C4OC,Doxorubicin,1,0.32,1.08,438.4,9,0,Drug-like
+CC(=O)Oc1ccccc1,Phenyl acetate,0,300.63,1.61,136.1,2,0,Drug-like
+CC(C)NCC(O)COc1ccccc1,Propranolol,1,1.52,1.42,209.3,3,2,Drug-like
+C1=CC=C2C(=C1)C(=O)NC2=O,Phenytoin,1,0.77,0.57,147.1,2,1,Drug-like
+c1ccc(cc1)C(=O)O,Benzoic acid,1,2.75,1.38,122.1,1,1,Drug-like
+CCCCCCCCCCCCCCCC,Hexadecane,0,149.2,6.49,226.4,0,0,Drug-like
+c1ccccc1,Benzene,0,342.45,1.69,78.1,0,0,Drug-like
+CCCCCCCCCCCCCCCC,Hexadecane,0,52.92,6.49,226.4,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)OCC,Ibuprofen ester,1,0.71,3.55,234.3,2,0,Drug-like
+CC(C)(C)C,Neopentane,0,423.23,2.05,72.2,0,0,Drug-like
+C1CCCCC1,Cyclohexane,0,364.16,2.34,84.2,0,0,Drug-like
+C1COCCO1,Dioxane,0,324.11,0.03,88.1,2,0,Drug-like
+C1=CC=C2C=CC=CC2=C1,Compound_14,1,106.06,2.84,128.2,0,0,Random
+C1CCCC2CCCCC21,Compound_3,1,79.43,3.37,138.3,0,0,Random
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C,Theophylline,1,1.22,-1.03,194.2,6,0,Drug-like
+CCCCCCCCCC,Decane,0,321.68,4.15,142.3,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(=O)O,Ibuprofen acid,1,3.32,2.58,178.2,1,1,Drug-like
+CCOCC,Compound_7,1,179.62,1.04,74.1,1,0,Random
+CC(C)(C)C1=CC=C(C=C1)C(=O)O,Fenbufen,1,0.79,2.68,178.2,1,1,Drug-like
+CC(C)C,Isobutane,0,239.86,1.66,58.1,0,0,Drug-like
+CC(C)(C)NCC(O)COc1ccccc1,Atenolol,1,1.16,1.81,223.3,3,2,Drug-like
+CC(=O)Oc1ccccc1,Phenyl acetate,0,495.29,1.61,136.1,2,0,Drug-like
+c1ccc(cc1)C(=O)O,Benzoic acid,1,2.59,1.38,122.1,1,1,Drug-like
+CC(C)CC1=CC=C(C=C1)C(=O)O,Ibuprofen acid,1,2.36,2.58,178.2,1,1,Drug-like
+CC(C)(C)C1=CC=C(C=C1)C(=O)O,Fenbufen,1,0.71,2.68,178.2,1,1,Drug-like
+C1=CC2=C(C=C1)C=CC=C2,Compound_17,1,107.63,2.84,128.2,0,0,Random
+C1=CC=CC2=CC=CC=C12,Naphthalene,0,175.09,2.84,128.2,0,0,Drug-like
+CC1=CC=CC=C1,Toluene,0,216.58,2.0,92.1,0,0,Drug-like
+c1ccncc1,Pyridine,0,367.06,1.08,79.1,1,0,Drug-like
+CC1=CC=C(C=C1)C(=O)O,Tolmetin,1,0.96,1.69,136.2,1,1,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Ibuprofen,1,0.78,3.07,206.3,1,1,Drug-like
+CC(C)CCCC(C)C,Compound_1,1,188.61,3.47,128.3,0,0,Random
+CC(=O)Oc1ccccc1C(=O)O,Aspirin,1,0.58,1.31,180.2,3,1,Drug-like
+C#CC#C,Compound_6,1,52.92,0.25,50.1,0,0,Random
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C,Theophylline,1,0.91,-1.03,194.2,6,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)OCC,Ibuprofen ester,1,0.61,3.55,234.3,2,0,Drug-like
+CCCCCCCCCCCCCCCC,Hexadecane,0,295.22,6.49,226.4,0,0,Drug-like
+c1ccccc1,Benzene,0,61.94,1.69,78.1,0,0,Drug-like
+CC(C)(C)NCC(O)COc1ccccc1,Atenolol,1,1.41,1.81,223.3,3,2,Drug-like
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C,Theophylline,1,1.05,-1.03,194.2,6,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Ibuprofen,1,0.86,3.07,206.3,1,1,Drug-like
+C1COCCO1,Dioxane,0,220.75,0.03,88.1,2,0,Drug-like
+COc1cc2c(cc1OC)C(=O)C3=C(C2=O)C(=O)C4=C(C3=O)C(OC)=C(OC)C=C4OC,Doxorubicin,1,0.29,1.08,438.4,9,0,Drug-like
+CC(C)C,Isobutane,0,354.51,1.66,58.1,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(=O)O,Ibuprofen acid,1,3.69,2.58,178.2,1,1,Drug-like
+C1=CC=CC2=CC=CC=C12,Naphthalene,0,154.76,2.84,128.2,0,0,Drug-like
+CCCCCCCCCC,Decane,0,91.74,4.15,142.3,0,0,Drug-like
+CCCCCCCCCCCCCCCC,Hexadecane,0,414.24,6.49,226.4,0,0,Drug-like
+CCCC[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)NC(=O)[C@@H](CC(C)C)N,Tripeptide,1,0.65,1.65,357.5,4,4,Drug-like
+C1CCCC1,Compound_2,1,63.28,1.95,70.1,0,0,Random
+C1CCCCC1,Cyclohexane,0,480.75,2.34,84.2,0,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Ibuprofen,1,0.76,3.07,206.3,1,1,Drug-like
+CN1C=NC2=C1C(=O)NC(=O)N2C,Caffeine,1,0.97,-1.04,180.2,5,1,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Naproxen,1,1.54,3.07,206.3,1,1,Drug-like
+CC(C)C[C@@H](C(=O)NCC(=O)O)NC(=O)C(C(C)C)N,Dipeptide,1,0.46,-0.3,287.4,4,4,Drug-like
+c1ccc(cc1)C(=O)O,Benzoic acid,1,2.48,1.38,122.1,1,1,Drug-like
+CC(=O)NC1=CC=C(C=C1)O,Paracetamol,1,0.62,1.35,151.2,2,2,Drug-like
+CC(C)C,Isobutane,0,89.12,1.66,58.1,0,0,Drug-like
+CCCC[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)NC(=O)[C@@H](CC(C)C)N,Tripeptide,1,0.57,1.65,357.5,4,4,Drug-like
+c1ccc(cc1)C(=O)O,Benzoic acid,1,2.34,1.38,122.1,1,1,Drug-like
+CC1=C(C=CC=C1)C(=O)O,o-Toluic acid,1,4.14,1.69,136.1,1,1,Drug-like
+CCCCCCCCCCCCCCCCCC,Compound_4,1,92.04,7.27,254.5,0,0,Random
+CC(C)(C)C1=CC=C(C=C1)C(=O)O,Fenbufen,1,0.7,2.68,178.2,1,1,Drug-like
+CC1=CC=C(C=C1)C(=O)O,Tolmetin,1,0.99,1.69,136.2,1,1,Drug-like
+c1ccncc1,Pyridine,0,152.55,1.08,79.1,1,0,Drug-like
+CC1=CC=C(C=C1)C(=O)O,Tolmetin,1,0.93,1.69,136.2,1,1,Drug-like
+C1=CC=CC2=C1C=CC=C2,Compound_16,1,144.28,2.84,128.2,0,0,Random
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Naproxen,1,1.45,3.07,206.3,1,1,Drug-like
+CN1C=NC2=C1C(=O)N(C(=O)N2C)C,Theophylline,1,1.14,-1.03,194.2,6,0,Drug-like
+C1CCCCC1,Cyclohexane,0,119.97,2.34,84.2,0,0,Drug-like
+C1=CC=C2C(=C1)C(=O)NC2=O,Phenytoin,1,0.88,0.57,147.1,2,1,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)O,Naproxen,1,1.36,3.07,206.3,1,1,Drug-like
+CCCCCCCCCCCCCCCCCCCCCC,Compound_13,1,76.63,8.83,310.6,0,0,Random
+CC(=O)Oc1ccccc1,Phenyl acetate,0,429.28,1.61,136.1,2,0,Drug-like
+CC(C)CC1=CC=C(C=C1)C(C)C(=O)OCC,Ibuprofen ester,1,0.56,3.55,234.3,2,0,Drug-like
+CCCC[C@@H](C(=O)N[C@@H](CC(C)C)C(=O)O)NC(=O)[C@@H](CC(C)C)N,Tripeptide,1,0.62,1.65,357.5,4,4,Drug-like
+C1=CC=NC=C1,Compound_9,1,102.15,1.08,79.1,1,0,Random
+CC(=O)Oc1ccccc1C(=O)O,Aspirin,1,0.49,1.31,180.2,3,1,Drug-like
+CC1=CC=C(C=C1)C(=O)O,Tolmetin,1,0.84,1.69,136.2,1,1,Drug-like
+CC1=C(C=CC=C1)C(=O)O,o-Toluic acid,1,3.29,1.69,136.1,1,1,Drug-like
+c1ccc(cc1)C(=O)O,Benzoic acid,1,2.84,1.38,122.1,1,1,Drug-like
+CC(C)C[C@@H](C(=O)NCC(=O)O)NC(=O)C(C(C)C)N,Dipeptide,1,0.41,-0.3,287.4,4,4,Drug-like
+CC(C)(C)C,Neopentane,0,437.77,2.05,72.2,0,0,Drug-like
+CCOC(C)=O,Ethyl acetate,0,220.34,0.57,88.1,2,0,Drug-like
+CC1=CC=CC=C1,Toluene,0,144.28,2.0,92.1,0,0,Drug-like
+C1CCCCC1,Cyclohexane,0,203.11,2.34,84.2,0,0,Drug-like
+CC(C)C,Isobutane,0,63.41,1.66,58.1,0,0,Drug-like
+C1COCCO1,Dioxane,0,127.01,0.03,88.1,2,0,Drug-like
+CCCCCCCCCCCCCC,Compound_18,1,128.37,5.71,198.4,0,0,Random
+C1=CC=C2C(=C1)C(=O)NC2=O,Phenytoin,1,1.03,0.57,147.1,2,1,Drug-like
+CC(C)C,Isobutane,0,451.48,1.66,58.1,0,0,Drug-like
+c1ccncc1,Pyridine,0,70.62,1.08,79.1,1,0,Drug-like
+CN1C=NC2=C1C(=O)NC(=O)N2C,Caffeine,1,0.99,-1.04,180.2,5,1,Drug-like
+CCCCCCCCCC,Decane,0,93.52,4.15,142.3,0,0,Drug-like
+CC(C)(C)C,Neopentane,0,328.33,2.05,72.2,0,0,Drug-like
