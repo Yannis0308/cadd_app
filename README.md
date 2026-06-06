@@ -8,7 +8,7 @@
 |------|------|
 | 🧪 **分子分析** | 理化性质预测（QED / LogP / Lipinski）、PubChem 相似性检索、SA Score 可合成性评估、2D/3D 分子可视化 |
 | 🤖 **模型训练** | 数据导入 → 清洗 → 特征工程 → 机器学习模型训练（RF / XGBoost / SVM）→ 评估 → 新分子预测 |
-| 🔍 **知识发现** | Open Targets 疾病-靶点双向检索、PDB 3D 结构渲染、PubMed 文献挖掘、基于智谱 GLM-4 的 AI 科研助手 |
+| 🔍 **知识发现** | Open Targets 疾病-靶点双向检索、PDB 3D 结构渲染、PubMed 文献挖掘、基于 Qwen 的 AI 科研助手 |
 | 🎨 **分子设计** | SMILESGPT AI 分子生成、遗传算法先导化合物优化、AutoDock Vina 虚拟筛选与 3D 结合构象查看 |
 
 ## 📁 项目结构
