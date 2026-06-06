@@ -37,7 +37,7 @@ gemmi>=0.6.0                      # meeko PDB 解析后端之二
 
 # ---- 外部 API / 数据源 ----
 requests>=2.28.0                  # PubChem / UniProt / Open Targets / NCBI
-zhipuai>=2.0.0                    # 智谱 GLM-4 智能助手
+dashscope>=1.20.0                  # 阿里通义千问智能助手
 
 # ---- 图像处理 (RDKit MolToImage 依赖) ----
 Pillow>=10.0.0
