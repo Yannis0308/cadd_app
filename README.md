@@ -98,7 +98,7 @@ streamlit run Homepage.py
 | 机器学习 | `scikit-learn`, `xgboost` | 分类/回归模型训练 |
 | 可视化 | `plotly`, `py3Dmol`, `stmol` | 图表 & 蛋白质 3D 渲染 |
 | 分子对接 | `meeko`, `vina`, `prody`, `gemmi` | PDB 准备 → AutoDock Vina 对接 |
-| 外部 API | `requests`, `zhipuai` | 数据库检索 & AI 助手 |
+| 外部 API | `requests`, `dashscopei` | 数据库检索 & AI 助手 |
 | 数据处理 | `pandas`, `numpy`, `scipy`, `openpyxl` | 数据读写 & 数值计算 |
 
 > **关于 `prody` / `gemmi`**：这两个包是 `meeko` 解析 PDB 文件的后端，至少安装其中一个即可。都安装时 meeko 优先使用 `gemmi`。
