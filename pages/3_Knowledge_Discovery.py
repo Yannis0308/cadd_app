@@ -89,7 +89,7 @@ st.markdown("""
 # ═══════════════════════════════════════════════════════════════════
 # 页面标题
 # ═══════════════════════════════════════════════════════════════════
-page_title("🔍 药物知识挖掘与发现")
+page_title("🔍 药物知识挖掘与发现平台")
 description("基于真实数据流驱动的靶点检索、三维晶体结构在线渲染与AI科研助手联动")
 divider()
 
@@ -522,25 +522,21 @@ with tab2:
 # ═══════════════════════════════════════════════════════════════════
 # Tab 3 — 文献挖掘
 # ═══════════════════════════════════════════════════════════════════
+# ------------------------------------------
+# tab3 - 文献挖掘
+# ------------------------------------------
 with tab3:
-    st.markdown(
-        '<div class="content-card">'
-        '<h3>📚 文献挖掘与时空过滤</h3>'
-        '<p style="color:#6B7280; font-size:0.9rem; margin:0;">基于 NCBI PubMed 数据库，实时检索最新科研文献。</p>'
-        '</div>',
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="content-card"><h3>📚 文献挖掘与时空过滤</h3><p style="color:#6B7280; font-size:0.9rem; margin:0;">基于 NCBI PubMed 数据库，实时检索最新科研文献。</p></div>', unsafe_allow_html=True)
     col_l1, col_l2 = st.columns([1, 1])
     with col_l1:
         lit_keyword = st.text_input("输入文献关键词", value="", placeholder="例如：Alzheimer disease", key="lit_key")
     with col_l2:
         time_mode = st.selectbox("发表时间范围", ["不限", "近1年", "近5年", "自定义"], index=0)
-
+        
     current_year = datetime.datetime.now().year
     start_date_query, end_date_query = "", ""
-
+    
     if time_mode == "自定义":
-        st.write("---")
         row1_c1, row1_c2, row1_c3 = st.columns(3)
         with row1_c1:
             s_year = st.number_input("起始年份", min_value=1980, max_value=current_year, value=2020)
@@ -548,195 +544,130 @@ with tab3:
             s_month = st.number_input("起始月份", min_value=1, max_value=12, value=1)
         with row1_c3:
             s_day = st.number_input("起始日期", min_value=1, max_value=31, value=1)
+        
+        row2_c1, row2_c2, row2_c3 = st.columns(3)
+        with row2_c1:
+            e_year = st.number_input("终止年份", min_value=1980, max_value=current_year, value=current_year)
+        with row2_c2:
+            e_month = st.number_input("终止月份", min_value=1, max_value=12, value=12)
+        with row2_c3:
+            e_day = st.number_input("终止日期", min_value=1, max_value=31, value=31)
+
         start_date_query = f"{s_year}/{s_month:02d}/{s_day:02d}"
-        end_date_query = f"{current_year}/12/31"
+        end_date_query = f"{e_year}/{e_month:02d}/{e_day:02d}"
+
     elif time_mode != "不限":
         delta_map = {"近1年": 1, "近5年": 5}
         start_date_query = f"{current_year - delta_map[time_mode]}/01/01"
         end_date_query = f"{current_year}/12/31"
-
+        
     run_search_btn = st.button("检索 PubMed 文献", type="primary", use_container_width=True)
     if run_search_btn and lit_keyword.strip():
         with st.spinner("正在连接 NCBI 数据库并检索文献..."):
             papers_data = search_pubmed_real(lit_keyword, start_date_query, end_date_query)
             st.session_state.custom_papers_df = pd.DataFrame(papers_data) if papers_data else None
-
+            
     if st.session_state.get('custom_papers_df') is not None:
-        st.dataframe(
-            st.session_state.custom_papers_df, use_container_width=True, hide_index=True,
-            column_config={
-                "详细信息": st.column_config.LinkColumn("点击跳转，查看详细信息", display_text="🔗 点击跳转"),
-            },
-        )
+        st.dataframe(st.session_state.custom_papers_df, use_container_width=True, hide_index=True,
+            column_config={"详细信息": st.column_config.LinkColumn("点击跳转，查看详细信息", display_text="🔗 点击跳转")})
 
-# ═══════════════════════════════════════════════════════════════════
-# Tab 5 — CADD 智能科研助手
-# ═══════════════════════════════════════════════════════════════════
+# ------------------------------------------
+# tab5 - 智能化科研助手（通义千问正常聊天版 - 完美修复版）
+# ------------------------------------------
 with tab5:
     st.markdown("""
     <div class="content-card">
         <h3>🤖 CADD 专家级智能体</h3>
         <p style="color:#6B7280; font-size:0.9rem; margin:0;">
-            基于智谱 GLM-4 的科研助手，支持文献检索与靶点分析联动。
+            基于通义千问大模型，提供稳定、流畅的药物研发智能问答。
         </p>
     </div>
     """, unsafe_allow_html=True)
 
-    # ── 环境检测 ──
+    # 导入千问 SDK
     try:
-        from zhipuai import ZhipuAI
+        from dashscope import Generation
+        import dashscope
     except ImportError:
-        st.error("❌ 检测到未安装智谱 AI SDK，请在终端执行：`pip install zhipuai` 后重新启动项目。")
+        st.error("❌ 请先安装：pip install dashscope")
         st.stop()
 
-    zhipu_key_value = "1333007bd14c4286b9d11d0e4b0402cc.orq6PBcCNT3lsQws"
+    # ====================== 你的千问 API KEY ======================
+    DASHCOPE_API_KEY = "sk-fbe123aa0fd7404faa4ba9a951502a1e"  # 换成你自己的
+    dashscope.api_key = DASHCOPE_API_KEY
 
-    @st.cache_resource
-    def get_zhipu_client(key):
-        return ZhipuAI(api_key=key)
+    # 聊天历史初始化
+    if "agent_messages" not in st.session_state:
+        st.session_state.agent_messages = [
+            {"role": "assistant", "content": "你好！我是你的 CADD 智能科研助手。"}
+        ]
 
-    client = get_zhipu_client(zhipu_key_value)
-
-    CADD_EXPERT_PROMPT = """你是一位精通结构生物学、药物化学、生物信息学和计算辅助药物设计（CADD）的资深科学家。
-你在回答用户问题时必须坚守以下原则：
-1. 保持严谨、富有逻辑的学术和工程化语言，多从构效关系（QSAR）、分子对接能量（Vina Score）、结合口袋自由能变化等角度进行剖析。
-2. 当用户询问某项疾病的最新研究、突变耐药或靶点发现时，请【主动调用】工具 `search_pubmed_real` 查找文献，或者调用 `query_disease_targets` 查找已知疾病靶点。
-3. 得到工具返回的结构化数据后，请帮用户提炼并整合进你的最终学术报告中，并注明数据来源。"""
-
-    zhipu_tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "query_disease_targets",
-                "description": "从 Open Targets 获取与特定英文疾病强相关的候选靶点基因 Symbol 列表。",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "disease_name": {"type": "string", "description": "英文疾病名称，例如 'Alzheimer disease'"},
-                    },
-                    "required": ["disease_name"],
-                },
-            },
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "search_pubmed_real",
-                "description": "对接 NCBI PubMed 官方文献数据库获取真实的前沿科研文献流。",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "keyword": {"type": "string", "description": "文献挖掘的核心关键词或基因靶点名"},
-                        "start_date_str": {"type": "string", "description": "格式 YYYY/MM/DD，没有传空"},
-                        "end_date_str": {"type": "string", "description": "格式 YYYY/MM/DD，没有传空"},
-                    },
-                    "required": ["keyword", "start_date_str", "end_date_str"],
-                },
-            },
-        },
-    ]
-
-    # ── 渲染历史消息 ──
+    # 聊天窗口独立容器
     chat_sub_container = st.container(height=520)
-
     with chat_sub_container:
         for msg in st.session_state.agent_messages:
             with st.chat_message(msg["role"]):
                 st.markdown(msg["content"])
 
-    # ── 底部输入框 ──
-    if user_prompt := st.chat_input("向 CADD 智能体提问 (例如：'分析 EGFR 突变在非小细胞肺癌中的耐药机制')"):
+    # 用户输入处理
+    if user_prompt := st.chat_input("向 CADD 智能体提问 (例如：EGFR 靶向药在突变型非小细胞肺癌中的耐药机制)"):
+        # 显示用户消息并追加入历史
         with chat_sub_container:
             with st.chat_message("user"):
                 st.markdown(user_prompt)
-
         st.session_state.agent_messages.append({"role": "user", "content": user_prompt})
 
-        messages = [{"role": "system", "content": CADD_EXPERT_PROMPT}]
+        # 构造给通义千问的上下文消息
+        messages = [
+            {"role": "system", "content": "你是一位精通CADD、生物信息学和结构生物学的资深科学家。请从分子机制、蛋白结构、结合能及SAR等维度提供严谨分析。回答逻辑应涵盖‘机制-结构-临床意义’，并使用Markdown排版，确保内容专业、准确、精炼。"},
+        ]
         for m in st.session_state.agent_messages:
             messages.append({"role": m["role"], "content": m["content"]})
 
+        # 初始化最终回复变量，确保变量在全局作用域安全可见
+        full_response = ""
+
+        # 开始组织 AI 的流式回复
         with chat_sub_container:
             with st.chat_message("assistant"):
-                with st.status("🧬 智能体正在检索多源学术数据并推理...", expanded=True) as status:
+                # 1. 文本框占位符 st.empty() 必须放在 st.status 外部！
+                # 这样当状态栏折叠收起时，最终生成的学术报告依然完好呈现在聊天界面上
+                placeholder = st.empty()
+                
+                with st.status("🧬 正在深度思考并组织研发报告...", expanded=True) as status:
                     try:
-                        response = client.chat.completions.create(
-                            model="glm-4-plus",
-                            messages=messages,
-                            tools=zhipu_tools,
-                            tool_choice="auto",
-                        )
-
-                        response_message = response.choices[0].message
-                        tool_calls = response_message.tool_calls
-
-                        if tool_calls:
-                            messages.append({
-                                "role": "assistant",
-                                "content": response_message.content or "",
-                                "tool_calls": [
-                                    {
-                                        "id": tc.id,
-                                        "type": tc.type,
-                                        "function": {
-                                            "name": tc.function.name,
-                                            "arguments": tc.function.arguments,
-                                        },
-                                    }
-                                    for tc in tool_calls
-                                ],
-                            })
-
-                            for tool_call in tool_calls:
-                                function_name = tool_call.function.name
-                                function_args = eval(tool_call.function.arguments)
-
-                                st.write(f"⏳ 正在执行本地科学工具: `{function_name}`...")
-
-                                if function_name == "query_disease_targets":
-                                    tool_output = query_disease_targets(disease_name=function_args.get("disease_name"))
-                                elif function_name == "search_pubmed_real":
-                                    tool_output = search_pubmed_real(
-                                        keyword=function_args.get("keyword"),
-                                        start_date_str=function_args.get("start_date_str", ""),
-                                        end_date_str=function_args.get("end_date_str", ""),
-                                    )
-                                else:
-                                    tool_output = []
-
-                                messages.append({
-                                    "role": "tool",
-                                    "tool_call_id": tool_call.id,
-                                    "content": str(tool_output),
-                                })
-
-                            status.update(label="✅ 学术文献与靶点阵列获取成功！正在生成专家级学术报告...", state="complete", expanded=False)
-                        else:
-                            status.update(label="🧠 深度思考完成，正在生成解答...", state="complete", expanded=False)
-
-                        placeholder = st.empty()
-                        full_response = ""
-
-                        final_response_stream = client.chat.completions.create(
-                            model="glm-4-plus",
+                        # 调用通义千问 API
+                        responses = Generation.call(
+                            model="qwen-turbo",  # 可用 qwen-plus / qwen-long
                             messages=messages,
                             stream=True,
+                            result_format="message"
                         )
 
-                        for chunk in final_response_stream:
-                            if chunk.choices[0].delta.content:
-                                full_response += chunk.choices[0].delta.content
-                                placeholder.markdown(full_response + "▌")
+                        # 流式输出迭代
+                        for resp in responses:
+                            if resp.output and resp.output.choices:
+                                # 💡 核心修复：通义千问流式输出返回的是截止当前的「全量累加文本」
+                                # 因此在这里必须直接使用赋值「=」，绝对不能使用累加「+=」，否则会导致内容无限机械重复
+                                chunk = resp.output.choices[0].message.content
+                                if chunk:
+                                    full_response = chunk
+                                    # 在状态栏外面实时打印字迹
+                                    placeholder.markdown(full_response + "▌")
 
+                        # 打印不带光标的最终完整文本
                         placeholder.markdown(full_response)
-                        st.session_state.agent_messages.append({"role": "assistant", "content": full_response})
+                        status.update(label="✅ 学术报告撰写完成", state="complete", expanded=False)
 
-                    except Exception as agent_err:
-                        status.update(label="❌ 智能体联络中断", state="error")
-                        st.error(f"智谱大模型接口通讯失败: {str(agent_err)}")
+                    except Exception as e:
+                        status.update(label="❌ 通讯中断", state="error", expanded=False)
+                        st.error(f"千问API调用失败：{str(e)}")
+                        full_response = "抱歉，服务暂时不可用。"
+                        placeholder.markdown(full_response)
 
+        # 保存本轮高质量回复并强制刷新页面同步 Session 状态
+        st.session_state.agent_messages.append({"role": "assistant", "content": full_response})
         st.rerun()
-
 # ═══════════════════════════════════════════════════════════════════
 # 页脚
 # ═══════════════════════════════════════════════════════════════════

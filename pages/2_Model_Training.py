@@ -871,7 +871,7 @@ elif module == "🔮 6. 新分子预测":
 
     has_design_molecules = 'design_generated_smiles' in st.session_state and st.session_state.design_generated_smiles
 
-    import_tab1, import_tab2, import_tab3 = st.tabs(["✏️ 手动输入", "📁 上传文件", "🎨 从分子设计导入"])
+    import_tab1, import_tab2, import_tab3 = st.tabs(["✏️ 手动输入", "📁 上传文件", "🎨 从相似性搜索导入"])
 
     prediction_input = ""
 
@@ -916,7 +916,7 @@ elif module == "🔮 6. 新分子预测":
             show_details = st.checkbox("显示详细描述符", value=False, key="show_details_upload")
 
     with import_tab3:
-        st.markdown("从分子设计模块导入生成的分子")
+        st.markdown("从分子分析模块导入生成的分子")
 
         if has_design_molecules:
             design_smiles = st.session_state.design_generated_smiles
@@ -949,13 +949,13 @@ elif module == "🔮 6. 新分子预测":
                 show_details = st.checkbox("显示详细描述符", value=False, key="show_details_design")
                 st.info(f"✅ 已导入 {len(st.session_state.design_imported_smiles)} 个设计分子")
         else:
-            st.info("💡 暂无设计分子，请先在「分子设计」模块生成分子")
+            st.info("💡 暂无设计分子，请先在「分子分析」模块生成分子")
             st.markdown("""
-            **如何使用分子设计模块：**
-            1. 进入「分子设计」模块
-            2. 设置生成条件（如分子量范围、LogP范围等）
-            3. 点击生成分子
-            4. 返回本模块，点击「一键导入」
+            **如何使用分子分析模块：**
+            1. 进入「分子分析」模块
+            2. 设置相似性搜索阈值并进行检索
+            3. 挑选分子
+            4. 发送至本模块
             """)
 
     divider()
